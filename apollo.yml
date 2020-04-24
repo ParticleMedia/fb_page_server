@@ -1,0 +1,7 @@
+nonlocal-indexer:
+  build:
+    command: /bin/bash build.sh
+    image: docker.particlenews.com:5000/go:1.12
+    volume:
+      from: /data/cache/go
+      to: /root/go
