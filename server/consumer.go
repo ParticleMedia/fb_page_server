@@ -25,9 +25,10 @@ func NewKafkaConsumer(name string, conf *common.KafkaConfig) (*KafkaConsumer, er
 	config.Group.Return.Notifications = true
 	config.Consumer.Offsets.Initial = sarama.OffsetNewest //初始从最新的offset开始
 	var commitOffset bool = (conf.CommitInterval > 0)
+	config.Consumer.Offsets.AutoCommit.Enable = commitOffset
 	if commitOffset {
 		// 提交commit
-		config.Consumer.Offsets.CommitInterval = time.Duration(conf.CommitInterval) * time.Second
+		config.Consumer.Offsets.AutoCommit.Interval = time.Duration(conf.CommitInterval) * time.Second
 	} else {
 		// 不提交commit
 		glog.Infof("do not commit kafka")
