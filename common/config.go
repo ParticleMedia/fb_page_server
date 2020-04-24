@@ -23,7 +23,6 @@ type ElasticSearchConfig struct {
 	Enable  bool     `yaml:"enable"`
 	Addr    []string `yaml:"addr"`
 	Index   string   `yaml:"index"`
-	DocType string   `yaml:"doc_type"`
 	Timeout int64    `yaml:"timeout"`
 }
 

@@ -28,7 +28,6 @@ elastic_search:
   addr:
     - http://nonlocal-es.ha.nb.com:9200
   index: nonlocal-doc
-  doc_type: news
   timeout: 5000
 
 trace:

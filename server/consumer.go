@@ -108,6 +108,7 @@ func (c *KafkaConsumer) Consume(f MessageHandler) {
 	}()
 
 	// log client errors
+	c.swg.Add(1)
 	go func() {
 		defer c.swg.Done()
 		for err := range c.client.Errors() {

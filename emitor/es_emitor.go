@@ -9,8 +9,8 @@ import (
 	"github.com/ParticleMedia/nonlocal-indexer/common"
 	"github.com/golang/glog"
 	"github.com/rcrowley/go-metrics"
-	"github.com/elastic/go-elasticsearch/v6"
-	"github.com/elastic/go-elasticsearch/v6/esapi"
+	"github.com/elastic/go-elasticsearch/v7"
+	"github.com/elastic/go-elasticsearch/v7/esapi"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -63,7 +63,6 @@ func (i *ESIndexer) doIndex(esDoc *common.ESDocument, index string, l *common.Lo
 	l.Set("es_doc", string(jsonDoc))
 	indexReq := esapi.IndexRequest{
 		Index:        index,
-		DocumentType: i.conf.DocType,
 		DocumentID:   esDoc.DocId,
 		Body:         bytes.NewReader(jsonDoc),
 		Refresh:      "true",
