@@ -32,6 +32,7 @@ func NewKafkaConsumer(name string, conf *common.KafkaConfig) (*KafkaConsumer, er
 	} else {
 		// 不提交commit
 		glog.Infof("do not commit kafka")
+		config.Consumer.Offsets.AutoCommit.Interval = time.Second
 	}
 
 	c, err := cluster.NewConsumer(conf.Addrs, conf.GroupId, conf.Topics, config)
