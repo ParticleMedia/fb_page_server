@@ -42,7 +42,7 @@ type CppDocument struct {
 	ContentType  string     `json:"ctype"`
 	Domain       string     `json:"domain"`
 	Source       string     `json:"source"`
-	Url          string     `json:"url"`
+	Url          string     `json:"src_url"`
 	IsLocalNews  string     `json:"is_local_news"`
 	GeoTags      []GeoTag   `json:"geotag,omitempty"`
 	Pois         []string   `json:"poi,omitempty"`

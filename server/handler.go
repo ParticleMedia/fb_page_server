@@ -71,7 +71,7 @@ func handlerWrapper(name string, handler func([]byte, *common.LogInfo) error) Me
 }
 
 func newsMessageHandler(data []byte, l *common.LogInfo) error {
-	glog.V(16).Info(string(data))
+	//glog.V(16).Info(string(data))
 	var cppDoc common.CppDocument
 	err := json.Unmarshal(data, &cppDoc)
 	if err != nil {
