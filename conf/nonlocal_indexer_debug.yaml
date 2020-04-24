@@ -25,8 +25,8 @@ news_kafka:
 elastic_search:
   enable: true
   addr:
-    - http://local-es.ha.nb.com:9200
-  index: local-test
+    - http://nonlocal-es.ha.nb.com:9200
+  index: nonlocal-test
   doc_type: news
   timeout: 5000
 
