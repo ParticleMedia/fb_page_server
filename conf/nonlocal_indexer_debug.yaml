@@ -16,6 +16,7 @@ news_kafka:
     - 172.24.21.112:9092
     - 172.24.19.184:9092
     - 172.24.16.186:9092
+  version: 1.0.1
   group_id: es_nonlocal_indexer_test
   topics:
     - cpp_documents

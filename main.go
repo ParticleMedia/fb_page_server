@@ -96,7 +96,7 @@ func main() {
 
 	handler, err := server.NewHandler(common.ServiceConfig)
 	if err != nil {
-		glog.Fatal("Init handler error %+v", err)
+		glog.Fatalf("Init handler error %+v", err)
 	}
 	handler.Start()
 	handler.Join()

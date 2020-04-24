@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"golang.org/x/net/context"
+	"log"
 	"sync"
 	"time"
 
@@ -23,7 +24,13 @@ type KafkaConsumer struct {
 }
 
 func NewKafkaConsumer(name string, conf *common.KafkaConfig) (*KafkaConsumer, error) {
+	version, err := sarama.ParseKafkaVersion(conf.Version)
+	if err != nil {
+		log.Panicf("Error parsing Kafka version: %v", err)
+	}
+
 	config := sarama.NewConfig()
+	config.Version = version
 	config.Consumer.Return.Errors = true
 	config.Consumer.Offsets.Initial = sarama.OffsetNewest //初始从最新的offset开始
 	var commitOffset bool = (conf.CommitInterval > 0)

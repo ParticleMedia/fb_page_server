@@ -12,6 +12,7 @@ var ServiceConfig *Config
 type KafkaConfig struct {
 	Enable         bool     `yaml:"enable"`
 	Addrs          []string `yaml:"addrs"`
+	Version        string   `yaml:"version"`
 	GroupId        string   `yaml:"group_id"`
 	Topics         []string `yaml:"topics"`
 	CommitInterval uint32   `yaml:"commit_interval"`
