@@ -42,7 +42,7 @@ type CppDocument struct {
 	ContentType  string     `json:"ctype"`
 	Domain       string     `json:"domain"`
 	Source       string     `json:"source"`
-	Url          string     `json:"src_url"`
+	Url          string     `json:"id"`
 	IsLocalNews  string     `json:"is_local_news"`
 	GeoTags      []GeoTag   `json:"geotag,omitempty"`
 	Pois         []string   `json:"poi,omitempty"`
@@ -85,6 +85,7 @@ func NewIndexerDocumentFromCpp(doc *CppDocument) *IndexerDocument {
 		ContentType:  ctype,
 		Domain:       doc.Domain,
 		Source:       doc.Source,
+		Url:          doc.Url,
 		GeoTags:      doc.GeoTags,
 		IsLocalNews:  doc.IsLocalNews,
 		Pois:         doc.Pois,
