@@ -16,8 +16,8 @@ func traceEmitor(uri string, event string) NewsEmitor {
 		metrics.GetOrRegisterMeter("trace.qps", nil).Mark(1)
 		resp, err := http.Get(url)
 		//code := resp.StatusCode
-		resp.Body.Close()
 		if err == nil {
+			resp.Body.Close()
 			metrics.GetOrRegisterHistogram("trace.error", nil, metrics.NewExpDecaySample(128, 0.015)).Update(0)
 			metrics.GetOrRegisterTimer("trace.latency", nil).Update(time.Since(start))
 		} else {
