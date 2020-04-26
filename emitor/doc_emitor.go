@@ -43,7 +43,8 @@ func EmitNews(doc *common.IndexerDocument, l *common.LogInfo) error {
 		err := emitor(doc, l)
 		dests = append(dests, name)
 		if err != nil {
-			return err
+			//return err
+			continue
 		}
 	}
 	return nil
