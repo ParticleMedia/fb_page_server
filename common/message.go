@@ -34,6 +34,14 @@ func (t *TextCategoryStruct) GetFirstCategory() string {
 	return cat
 }
 
+func (t *TextCategoryStruct) IsSport() bool {
+	if t == nil || t.FirstCategory == nil {
+		return false
+	}
+	_, ok := t.FirstCategory["Sports"]
+	return ok
+}
+
 // cpp kafka message
 type CppDocument struct {
 	DocId        string     `json:"_id"`

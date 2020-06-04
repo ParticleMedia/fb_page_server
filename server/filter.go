@@ -29,7 +29,7 @@ func basicFilter(doc *common.IndexerDocument) bool {
 }
 
 func localFilter(doc *common.IndexerDocument) bool {
-	return doc.IsLocalNews == "true"
+	return doc.IsLocalNews == "true" && (doc.TextCategory == nil || !doc.TextCategory.IsSport())
 }
 
 func domainFilter(doc *common.IndexerDocument) bool {
