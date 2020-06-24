@@ -136,7 +136,7 @@ func transformToEsDoc(doc *common.IndexerDocument) *common.ESDocument {
 		Title:        doc.Title,
 		Timestamp:    time.Now().UnixNano() / 1000000,
 		Domain:       doc.Domain,
-		Source:       strings.ToLower(doc.Source),
+		Source:       common.ReplaceSpace(strings.ToLower(doc.Source)),
 		Url:          doc.Url,
 		Pois:         doc.Pois,
 		Channels:     doc.Channels,

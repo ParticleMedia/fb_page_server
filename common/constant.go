@@ -1,5 +1,7 @@
 package common
 
+import "strings"
+
 const (
 	MODE_STRICT = iota
 	MODE_RELAX
@@ -28,4 +30,8 @@ func GeoTypeToScope(geoType string) int {
 	} else {
 		return SCOPE_GLOBAL
 	}
+}
+
+func ReplaceSpace(raw string) string {
+	return strings.ReplaceAll(raw, " ", "^^")
 }

@@ -1,7 +1,6 @@
 package common
 
 import (
-	"strings"
 	"time"
 )
 
@@ -93,7 +92,7 @@ func NewIndexerDocumentFromCpp(doc *CppDocument) *IndexerDocument {
 	tags := make([]string, 0, len(doc.NluTags))
 	if doc.NluTags != nil {
 		for _, tag := range doc.NluTags {
-			tags = append(tags, strings.ReplaceAll(tag, " ", "^^"))
+			tags = append(tags, ReplaceSpace(tag))
 		}
 	}
 	return &IndexerDocument{
