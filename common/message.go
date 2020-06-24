@@ -1,6 +1,7 @@
 package common
 
 import (
+	"strings"
 	"time"
 )
 
@@ -55,6 +56,7 @@ type CppDocument struct {
 	GeoTags      []GeoTag   `json:"geotag,omitempty"`
 	Pois         []string   `json:"poi,omitempty"`
 	Channels     []string   `json:"channels,omitempty"`
+	NluTags      []string   `json:"nlu_tags,omitempty"`
 	Tpcs         map[string]float64   `json:"tpcs,omitempty"`
 	TextCategory *TextCategoryStruct `json:"text_category,omitempty"`
 }
@@ -71,6 +73,7 @@ type IndexerDocument struct {
 	GeoTags      []GeoTag   `json:"geotag,omitempty"`
 	Pois         []string   `json:"poi,omitempty"`
 	Channels     []string   `json:"channels,omitempty"`
+	NluTags      []string   `json:"nlu_tags,omitempty"`
 	Tpcs         map[string]float64   `json:"tpcs,omitempty"`
 	TextCategory *TextCategoryStruct `json:"text_category,omitempty"`
 }
@@ -86,6 +89,13 @@ func NewIndexerDocumentFromCpp(doc *CppDocument) *IndexerDocument {
 	if cate == nil {
 		cate = &TextCategoryStruct{}
 	}
+
+	tags := make([]string, 0, len(doc.NluTags))
+	if doc.NluTags != nil {
+		for _, tag := range doc.NluTags {
+			tags = append(tags, strings.ReplaceAll(tag, " ", "^^"))
+		}
+	}
 	return &IndexerDocument{
 		DocId:        doc.DocId,
 		Epoch:        doc.Epoch,
@@ -98,6 +108,7 @@ func NewIndexerDocumentFromCpp(doc *CppDocument) *IndexerDocument {
 		IsLocalNews:  doc.IsLocalNews,
 		Pois:         doc.Pois,
 		Channels:     doc.Channels,
+		NluTags:      tags,
 		Tpcs:         doc.Tpcs,
 		TextCategory: cate,
 	}
@@ -113,6 +124,7 @@ type ESDocument struct {
 	Url          string    `json:"url,omitempty"`
 	Pois         []string  `json:"pois,omitempty"`
 	Channels     []string  `json:"channels,omitempty"`
+	NluTags      []string  `json:"nlu_tags,omitempty"`
 	Tpcs         []string  `json:"tpcs,omitempty"`
 	FirstCats    []string  `json:"first_cat,omitempty"`
 	SecondCats   []string  `json:"second_cat,omitempty"`
