@@ -78,6 +78,11 @@ func newsMessageHandler(data []byte, l *common.LogInfo) error {
 		return err
 	}
 
+	if cppDoc.DisableIndex {
+		metrics.GetOrRegisterMeter("news.disable.qps", nil).Mark(1)
+		return nil
+	}
+
 	doc := common.NewIndexerDocumentFromCpp(&cppDoc)
 	l.Set("docid", doc.DocId)
 	l.Set("epoch", doc.Epoch)

@@ -45,6 +45,7 @@ func (t *TextCategoryStruct) IsSport() bool {
 // cpp kafka message
 type CppDocument struct {
 	DocId        string     `json:"_id"`
+	DisableIndex bool       `json:"disable_index"`
 	Epoch        int64      `json:"epoch"`
 	Title        string     `json:"seg_title"`
 	ContentType  string     `json:"ctype"`
