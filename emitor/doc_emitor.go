@@ -21,9 +21,17 @@ func getNewsEmitors() map[string]NewsEmitor {
 			if err != nil {
 				glog.Fatalf("create es client error %+v", err)
 			}
-			newsEmitors["es"] = esIndexer.indexNews
+			newsEmitors["es"] = esIndexer.indexBaseNews
 		} else {
 			newsEmitors["mock_es"] = mockESEmitor(conf.LocalEs.Index)
+		}
+
+		if conf.LocalExpEs.Enable {
+			esIndexer, err := NewESIndexer(&conf.LocalExpEs)
+			if err != nil {
+				glog.Fatalf("create local exp es client error %+v", err)
+			}
+			newsEmitors["exp_es"] = esIndexer.indexExpNews
 		}
 
 		if conf.TraceConfig.Enable {

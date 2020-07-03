@@ -43,6 +43,7 @@ type Config struct {
 
 	NewsKafka  KafkaConfig         `yaml:"news_kafka"`
 	LocalEs    ElasticSearchConfig `yaml:"elastic_search"`
+	LocalExpEs ElasticSearchConfig `yaml:"exp_elastic_search"`
 
 	TraceConfig struct {
 		Enable bool   `yaml:"enable"`

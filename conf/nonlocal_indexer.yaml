@@ -30,6 +30,13 @@ elastic_search:
   index: nonlocal-doc
   timeout: 5000
 
+exp_elastic_search:
+  enable: true
+  addr:
+    - http://nonlocal-es.ha.nb.com:9200
+  index: nonlocal-exp
+  timeout: 5000
+
 trace:
   enable: true
   url: http://172.31.20.243:9750/set
