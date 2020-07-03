@@ -47,10 +47,15 @@ func NewESIndexer(conf *common.ElasticSearchConfig) (*ESIndexer, error) {
 	}, nil
 }
 
-func esPrepare(doc *common.IndexerDocument, indexPattern string) (*common.ESDocument, string) {
+func esPrepare(doc *common.IndexerDocument, isExp bool, indexPattern string) (*common.ESDocument, string) {
 	indexSplit := doc.Epoch / ES_INDEX_SPLIT_WINDOW
 	index := fmt.Sprintf("%s-%d", indexPattern, indexSplit)
-	esDoc := transformToEsDoc(doc)
+	var esDoc *common.ESDocument = nil
+	if isExp {
+		esDoc = transformToExpEsDoc(doc)
+	} else {
+		esDoc = transformToBaseEsDoc(doc)
+	}
 	return esDoc, index
 }
 
@@ -101,8 +106,8 @@ func (i *ESIndexer) doIndex(esDoc *common.ESDocument, index string, l *common.Lo
 	return nil
 }
 
-func (i *ESIndexer) indexNews(doc *common.IndexerDocument, l *common.LogInfo) error {
-	esDoc, index := esPrepare(doc, i.conf.Index)
+func (i *ESIndexer) indexNews(doc *common.IndexerDocument, isExp bool, l *common.LogInfo) error {
+	esDoc, index := esPrepare(doc, isExp, i.conf.Index)
 	//glog.V(16).Infof("index %s doc %s", index, esDoc)
 	l.Set("es_index", index)
 	err := i.doIndex(esDoc, index, l)
@@ -113,6 +118,14 @@ func (i *ESIndexer) indexNews(doc *common.IndexerDocument, l *common.LogInfo) er
 		glog.Warningf("es index to %s error: %+v", index, err)
 	}
 	return err
+}
+
+func (i *ESIndexer) indexBaseNews(doc *common.IndexerDocument, l *common.LogInfo) error {
+	return i.indexNews(doc, false, l)
+}
+
+func (i *ESIndexer) indexExpNews(doc *common.IndexerDocument, l *common.LogInfo) error {
+	return i.indexNews(doc, true, l)
 }
 
 func mapKeyList(m map[string]float64, thr float64) []string {
@@ -129,7 +142,7 @@ func mapKeyList(m map[string]float64, thr float64) []string {
 	return l
 }
 
-func transformToEsDoc(doc *common.IndexerDocument) *common.ESDocument {
+func transformToBaseEsDoc(doc *common.IndexerDocument) *common.ESDocument {
 	return &common.ESDocument{
 		DocId:        doc.DocId,
 		Date:         time.Unix(doc.Epoch, 0),
@@ -148,9 +161,28 @@ func transformToEsDoc(doc *common.IndexerDocument) *common.ESDocument {
 	}
 }
 
+func transformToExpEsDoc(doc *common.IndexerDocument) *common.ESDocument {
+	return &common.ESDocument{
+		DocId:        doc.DocId,
+		Date:         time.Unix(doc.Epoch, 0),
+		Title:        doc.Title,
+		Timestamp:    time.Now().UnixNano() / 1000000,
+		Domain:       doc.Domain,
+		Source:       common.ReplaceSpace(strings.ToLower(doc.Source)),
+		Url:          doc.Url,
+		Pois:         doc.Pois,
+		Channels:     doc.Channels,
+		NluTags:      doc.NluTags,
+		Tpcs:         mapKeyList(doc.Tpcs, 0.3),
+		FirstCats:    mapKeyList(doc.TextCategoryV2.FirstCategory, 0.0),
+		SecondCats:   mapKeyList(doc.TextCategoryV2.SecondCategory, 0.0),
+		ThirdCats:    mapKeyList(doc.TextCategoryV2.ThirdCategory, 0.0),
+	}
+}
+
 func mockESEmitor(indexPattern string) NewsEmitor {
 	return func(doc *common.IndexerDocument, l *common.LogInfo) error {
-		esDoc, index := esPrepare(doc, indexPattern)
+		esDoc, index := esPrepare(doc, false, indexPattern)
 		jsonDoc, err := json.Marshal(esDoc)
 		if err != nil {
 			glog.Warningf("encode es doc %+v to json error %+v", esDoc, err)

@@ -24,6 +24,13 @@ news_kafka:
   consumer: 8
 
 elastic_search:
+  enable: false
+  addr:
+    - http://nonlocal-es.ha.nb.com:9200
+  index: nonlocal-test
+  timeout: 5000
+
+exp_elastic_search:
   enable: true
   addr:
     - http://nonlocal-es.ha.nb.com:9200

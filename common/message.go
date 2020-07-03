@@ -44,38 +44,40 @@ func (t *TextCategoryStruct) IsSport() bool {
 
 // cpp kafka message
 type CppDocument struct {
-	DocId        string     `json:"_id"`
-	DisableIndex bool       `json:"disable_index"`
-	Epoch        int64      `json:"epoch"`
-	Title        string     `json:"seg_title"`
-	ContentType  string     `json:"ctype"`
-	Domain       string     `json:"domain"`
-	Source       string     `json:"source"`
-	Url          string     `json:"id"`
-	IsLocalNews  string     `json:"is_local_news"`
-	GeoTags      []GeoTag   `json:"geotag,omitempty"`
-	Pois         []string   `json:"poi,omitempty"`
-	Channels     []string   `json:"channels,omitempty"`
-	NluTags      []string   `json:"nlu_tags,omitempty"`
-	Tpcs         map[string]float64   `json:"tpcs,omitempty"`
-	TextCategory *TextCategoryStruct `json:"text_category,omitempty"`
+	DocId          string     `json:"_id"`
+	DisableIndex   bool       `json:"disable_index"`
+	Epoch          int64      `json:"epoch"`
+	Title          string     `json:"seg_title"`
+	ContentType    string     `json:"ctype"`
+	Domain         string     `json:"domain"`
+	Source         string     `json:"source"`
+	Url            string     `json:"id"`
+	IsLocalNews    string     `json:"is_local_news"`
+	GeoTags        []GeoTag   `json:"geotag,omitempty"`
+	Pois           []string   `json:"poi,omitempty"`
+	Channels       []string   `json:"channels,omitempty"`
+	NluTags        []string   `json:"nlu_tags,omitempty"`
+	Tpcs           map[string]float64   `json:"tpcs,omitempty"`
+	TextCategory   *TextCategoryStruct  `json:"text_category,omitempty"`
+	TextCategoryV2 *TextCategoryStruct  `json:"text_category_v2,omitempty"`
 }
 
 type IndexerDocument struct {
-	DocId        string     `json:"_id"`
-	Epoch        int64      `json:"epoch"`
-	Title        string     `json:"seg_title"`
-	ContentType  string     `json:"ctype"`
-	Domain       string     `json:"domain"`
-	Source       string     `json:"source"`
-	Url          string     `json:"url"`
-	IsLocalNews  string     `json:"is_local_news"`
-	GeoTags      []GeoTag   `json:"geotag,omitempty"`
-	Pois         []string   `json:"poi,omitempty"`
-	Channels     []string   `json:"channels,omitempty"`
-	NluTags      []string   `json:"nlu_tags,omitempty"`
-	Tpcs         map[string]float64   `json:"tpcs,omitempty"`
-	TextCategory *TextCategoryStruct `json:"text_category,omitempty"`
+	DocId          string     `json:"_id"`
+	Epoch          int64      `json:"epoch"`
+	Title          string     `json:"seg_title"`
+	ContentType    string     `json:"ctype"`
+	Domain         string     `json:"domain"`
+	Source         string     `json:"source"`
+	Url            string     `json:"url"`
+	IsLocalNews    string     `json:"is_local_news"`
+	GeoTags        []GeoTag   `json:"geotag,omitempty"`
+	Pois           []string   `json:"poi,omitempty"`
+	Channels       []string   `json:"channels,omitempty"`
+	NluTags        []string   `json:"nlu_tags,omitempty"`
+	Tpcs           map[string]float64   `json:"tpcs,omitempty"`
+	TextCategory   *TextCategoryStruct  `json:"text_category,omitempty"`
+	TextCategoryV2 *TextCategoryStruct  `json:"text_category_v2,omitempty"`
 }
 
 // 转换函数
@@ -90,6 +92,11 @@ func NewIndexerDocumentFromCpp(doc *CppDocument) *IndexerDocument {
 		cate = &TextCategoryStruct{}
 	}
 
+	cateV2 := doc.TextCategoryV2
+	if cateV2 == nil {
+		cateV2 = &TextCategoryStruct{}
+	}
+
 	tags := make([]string, 0, len(doc.NluTags))
 	if doc.NluTags != nil {
 		for _, tag := range doc.NluTags {
@@ -97,20 +104,21 @@ func NewIndexerDocumentFromCpp(doc *CppDocument) *IndexerDocument {
 		}
 	}
 	return &IndexerDocument{
-		DocId:        doc.DocId,
-		Epoch:        doc.Epoch,
-		Title:        doc.Title,
-		ContentType:  ctype,
-		Domain:       doc.Domain,
-		Source:       doc.Source,
-		Url:          doc.Url,
-		GeoTags:      doc.GeoTags,
-		IsLocalNews:  doc.IsLocalNews,
-		Pois:         doc.Pois,
-		Channels:     doc.Channels,
-		NluTags:      tags,
-		Tpcs:         doc.Tpcs,
-		TextCategory: cate,
+		DocId:          doc.DocId,
+		Epoch:          doc.Epoch,
+		Title:          doc.Title,
+		ContentType:    ctype,
+		Domain:         doc.Domain,
+		Source:         doc.Source,
+		Url:            doc.Url,
+		GeoTags:        doc.GeoTags,
+		IsLocalNews:    doc.IsLocalNews,
+		Pois:           doc.Pois,
+		Channels:       doc.Channels,
+		NluTags:        tags,
+		Tpcs:           doc.Tpcs,
+		TextCategory:   cate,
+		TextCategoryV2: cateV2,
 	}
 }
 
