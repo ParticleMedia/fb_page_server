@@ -56,6 +56,7 @@ type CppDocument struct {
 	GeoTags        []GeoTag   `json:"geotag,omitempty"`
 	Pois           []string   `json:"poi,omitempty"`
 	Channels       []string   `json:"channels,omitempty"`
+	ChannelsV2     []string   `json:"channels_v2,omitempty"`
 	NluTags        []string   `json:"nlu_tags,omitempty"`
 	Tpcs           map[string]float64   `json:"tpcs,omitempty"`
 	TextCategory   *TextCategoryStruct  `json:"text_category,omitempty"`
@@ -74,6 +75,7 @@ type IndexerDocument struct {
 	GeoTags        []GeoTag   `json:"geotag,omitempty"`
 	Pois           []string   `json:"poi,omitempty"`
 	Channels       []string   `json:"channels,omitempty"`
+	ChannelsV2     []string   `json:"channels_v2,omitempty"`
 	NluTags        []string   `json:"nlu_tags,omitempty"`
 	Tpcs           map[string]float64   `json:"tpcs,omitempty"`
 	TextCategory   *TextCategoryStruct  `json:"text_category,omitempty"`
@@ -115,6 +117,7 @@ func NewIndexerDocumentFromCpp(doc *CppDocument) *IndexerDocument {
 		IsLocalNews:    doc.IsLocalNews,
 		Pois:           doc.Pois,
 		Channels:       doc.Channels,
+		ChannelsV2:     doc.ChannelsV2,
 		NluTags:        tags,
 		Tpcs:           doc.Tpcs,
 		TextCategory:   cate,

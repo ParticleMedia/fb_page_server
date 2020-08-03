@@ -171,7 +171,7 @@ func transformToExpEsDoc(doc *common.IndexerDocument) *common.ESDocument {
 		Source:       common.ReplaceSpace(strings.ToLower(doc.Source)),
 		Url:          doc.Url,
 		Pois:         doc.Pois,
-		Channels:     doc.Channels,
+		Channels:     doc.ChannelsV2,
 		NluTags:      doc.NluTags,
 		Tpcs:         mapKeyList(doc.Tpcs, 0.3),
 		FirstCats:    mapKeyList(doc.TextCategoryV2.FirstCategory, 0.0),
