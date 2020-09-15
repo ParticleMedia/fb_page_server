@@ -15,6 +15,7 @@ var newsFilters = map[string]NewsFilter{
 	"domain": domainFilter,
 	"epoch":  epochFilter,
 	"ctype":  cTypeFilter,
+	"category": categoryFilter,
 }
 
 var domainBlackList = map[string]struct{}{}
@@ -44,6 +45,15 @@ func epochFilter(doc *common.IndexerDocument) bool {
 
 func cTypeFilter(doc *common.IndexerDocument) bool {
 	return doc.ContentType != "news"
+}
+
+func categoryFilter(doc *common.IndexerDocument) bool {
+	if doc.TextCategory == nil {
+		return false
+	}
+
+	_, ok := doc.TextCategory.FirstCategory["Obituary"]
+	return ok
 }
 
 func FilterNews(doc *common.IndexerDocument, l *common.LogInfo) bool {
