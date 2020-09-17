@@ -130,6 +130,7 @@ type ESDocument struct {
 	Date         time.Time `json:"date"`
 	Title        string    `json:"title"`
 	Timestamp    int64     `json:"ts"`
+	ContentType  string    `json:"contentType,omitempty"`
 	Domain       string    `json:"domain,omitempty"`
 	Source       string    `json:"source,omitempty"`
 	Url          string    `json:"url,omitempty"`

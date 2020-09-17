@@ -40,11 +40,11 @@ func domainFilter(doc *common.IndexerDocument) bool {
 
 func epochFilter(doc *common.IndexerDocument) bool {
 	now := time.Now().Unix()
-	return now-doc.Epoch > common.ServiceConfig.Expire
+	return now - doc.Epoch > common.ServiceConfig.Expire
 }
 
 func cTypeFilter(doc *common.IndexerDocument) bool {
-	return doc.ContentType != "news"
+	return doc.ContentType != "news" && doc.ContentType != "3rd_video"
 }
 
 func categoryFilter(doc *common.IndexerDocument) bool {
