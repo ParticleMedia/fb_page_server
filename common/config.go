@@ -26,6 +26,21 @@ type ElasticSearchConfig struct {
 	Timeout int64    `yaml:"timeout"`
 }
 
+type RedisConfig struct {
+	Enable bool `yaml:"enable"`
+	Network string `yaml:"network"`
+	Addr string `yaml:"addr"`
+	Password string `yaml:"password"`
+	Db int `yaml:"db" default:"0"`
+	Key string `yaml:"key"`
+	Limit uint64 `yaml:"limit"`
+	Dial struct {
+		ConnTimeout uint32 `yaml:"conn_timeout_ms" default:20`
+		ReadTimeout uint32 `yaml:"read_timeout_ms" default:100`
+		WriteTimeout uint32 `yaml:"write_timeout_ms" default:100`
+	} `yaml:"dial"`
+}
+
 type Config struct {
 	PprofPort uint32 `yaml:"pprof_port"`
 	Expire    int64  `yaml:"expire"`
@@ -41,9 +56,10 @@ type Config struct {
 		SampleRate uint32 `yaml:"sample_rate"`
 	} `yaml:"log"`
 
-	NewsKafka  KafkaConfig         `yaml:"news_kafka"`
-	LocalEs    ElasticSearchConfig `yaml:"elastic_search"`
-	LocalExpEs ElasticSearchConfig `yaml:"exp_elastic_search"`
+	NewsKafka     KafkaConfig         `yaml:"news_kafka"`
+	NonLocalEs    ElasticSearchConfig `yaml:"elastic_search"`
+	NonLocalExpEs ElasticSearchConfig `yaml:"exp_elastic_search"`
+	Redis         RedisConfig         `yaml:"redis"`
 
 	TraceConfig struct {
 		Enable bool   `yaml:"enable"`

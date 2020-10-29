@@ -1,6 +1,9 @@
 package common
 
-import "strings"
+import (
+	"github.com/rcrowley/go-metrics"
+	"strings"
+)
 
 const (
 	MODE_STRICT = iota
@@ -34,4 +37,20 @@ func GeoTypeToScope(geoType string) int {
 
 func ReplaceSpace(raw string) string {
 	return strings.ReplaceAll(raw, " ", "^^")
+}
+
+func GetOrRegisterHistogram(name string, r metrics.Registry, s func() metrics.Sample) metrics.Histogram {
+	if nil == r {
+		r = metrics.DefaultRegistry
+	}
+	return r.GetOrRegister(name, func() metrics.Histogram { return metrics.NewHistogram(s())}).(metrics.Histogram)
+}
+
+func SelectErrors(errs ...error) error {
+	for _, e := range errs {
+		if e != nil {
+			return e
+		}
+	}
+	return nil
 }

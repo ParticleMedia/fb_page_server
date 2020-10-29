@@ -38,6 +38,11 @@ func initGlobalResources() {
 	glog.Infof("Load config file: %+v success", *configFile)
 	glog.V(16).Infof("config content: %+v", *common.ServiceConfig)
 
+	dataErr := common.LoadAllDatas(common.ServiceConfig)
+	if dataErr != nil {
+		glog.Fatal("load data with error %+v", dataErr)
+	}
+
 	// emit metrics
 	if *metricsToTsdb {
 		addr, tsdbErr := net.ResolveTCPAddr("tcp", common.ServiceConfig.Tsdb.Addr)
@@ -59,6 +64,7 @@ func releaseGlobalResources() {
 		handler = nil
 		glog.Info("Handler stopped!")
 	}
+	common.ReleaseAllDatas()
 	metrics.DefaultRegistry.UnregisterAll()
 }
 

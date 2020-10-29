@@ -16,22 +16,30 @@ func getNewsEmitors() map[string]NewsEmitor {
 		// init emitors
 		newsEmitors = make(map[string]NewsEmitor)
 		conf := common.ServiceConfig
-		if conf.LocalEs.Enable {
-			esIndexer, err := NewESIndexer(&conf.LocalEs)
+		if conf.NonLocalEs.Enable {
+			esIndexer, err := NewESIndexer(&conf.NonLocalEs)
 			if err != nil {
 				glog.Fatalf("create es client error %+v", err)
 			}
 			newsEmitors["es"] = esIndexer.indexBaseNews
 		} else {
-			newsEmitors["mock_es"] = mockESEmitor(conf.LocalEs.Index)
+			newsEmitors["mock_es"] = mockESEmitor(conf.NonLocalEs.Index)
 		}
 
-		if conf.LocalExpEs.Enable {
-			esIndexer, err := NewESIndexer(&conf.LocalExpEs)
+		if conf.NonLocalExpEs.Enable {
+			esIndexer, err := NewESIndexer(&conf.NonLocalExpEs)
 			if err != nil {
-				glog.Fatalf("create local exp es client error %+v", err)
+				glog.Fatalf("create exp es client error %+v", err)
 			}
 			newsEmitors["exp_es"] = esIndexer.indexExpNews
+		}
+
+		if conf.Redis.Enable {
+			redisCli, err := NewRedisClient(&conf.Redis)
+			if err != nil {
+				glog.Fatalf("create redis client error %+v", err)
+			}
+			newsEmitors["newdoc"] = redisCli.indexNews
 		}
 
 		if conf.TraceConfig.Enable {

@@ -35,11 +35,37 @@ func (t *TextCategoryStruct) GetFirstCategory() string {
 }
 
 func (t *TextCategoryStruct) IsSport() bool {
+	return t.HasFirstCategory("Sports")
+}
+
+func (t *TextCategoryStruct) IsCrime() bool {
+	return t.HasFirstCategory("CrimePublicsafety")
+}
+
+func (t *TextCategoryStruct) HasFirstCategory(category string) bool {
 	if t == nil || t.FirstCategory == nil {
 		return false
 	}
-	_, ok := t.FirstCategory["Sports"]
+	_, ok := t.FirstCategory[category]
 	return ok
+}
+
+func (t *TextCategoryStruct) HasThirdCategory(category string) bool {
+	if t == nil || t.ThirdCategory == nil {
+		return false
+	}
+	_, ok := t.ThirdCategory[category]
+	return ok
+}
+
+
+// source info
+type SourceInfo struct {
+	Id         string `bson:"_id"`
+	Domain     string `bson:"domain"`
+	Quality    int32  `bson:"quality"`
+	Paywall    bool   `bson:"paywall_flag"`
+	Compatibility string `bson:"compatibility"`
 }
 
 // cpp kafka message
@@ -61,6 +87,12 @@ type CppDocument struct {
 	Tpcs           map[string]float64   `json:"tpcs,omitempty"`
 	TextCategory   *TextCategoryStruct  `json:"text_category,omitempty"`
 	TextCategoryV2 *TextCategoryStruct  `json:"text_category_v2,omitempty"`
+
+	IsOldDoc       bool       `json:"old_doc"`
+	TitleCCount    int        `json:"title_c_count"`
+	ImageCount     int        `json:"image_count"`
+	WordCount      int        `json:"c_word"`
+	HasVideo       bool       `json:"has_video"`
 }
 
 type IndexerDocument struct {
@@ -80,6 +112,12 @@ type IndexerDocument struct {
 	Tpcs           map[string]float64   `json:"tpcs,omitempty"`
 	TextCategory   *TextCategoryStruct  `json:"text_category,omitempty"`
 	TextCategoryV2 *TextCategoryStruct  `json:"text_category_v2,omitempty"`
+
+	IsOldDoc       bool       `json:"old_doc"`
+	TitleCCount    int        `json:"title_c_count"`
+	ImageCount     int        `json:"image_count"`
+	WordCount      int        `json:"c_word"`
+	HasVideo       bool       `json:"has_video"`
 }
 
 // 转换函数
@@ -122,6 +160,11 @@ func NewIndexerDocumentFromCpp(doc *CppDocument) *IndexerDocument {
 		Tpcs:           doc.Tpcs,
 		TextCategory:   cate,
 		TextCategoryV2: cateV2,
+
+		TitleCCount: doc.TitleCCount,
+		ImageCount: doc.ImageCount,
+		WordCount: doc.WordCount,
+		HasVideo: doc.HasVideo,
 	}
 }
 

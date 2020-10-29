@@ -37,6 +37,18 @@ exp_elastic_search:
   index: nonlocal-exp
   timeout: 5000
 
+redis:
+  enable: true
+  network: tcp
+  addr: click-proxy-codis.nb.com:6379
+  db: 1
+  key: newdoc_force_explore
+  limit: 3000
+  dial:
+    conn_timeout_ms: 500
+    read_timeout_ms: 500
+    write_timeout_ms: 1000
+
 trace:
   enable: true
   url: http://172.31.20.243:9750/set

@@ -24,18 +24,30 @@ news_kafka:
   consumer: 8
 
 elastic_search:
-  enable: false
+  enable: true
   addr:
     - http://nonlocal-es.ha.nb.com:9200
   index: nonlocal-test
   timeout: 5000
 
 exp_elastic_search:
-  enable: true
+  enable: false
   addr:
     - http://nonlocal-es.ha.nb.com:9200
   index: nonlocal-test
   timeout: 5000
+
+redis:
+  enable: true
+  network: tcp
+  addr: 172.31.30.131:6379
+  db: 0
+  key: newdoc_force_explore
+  limit: 3000
+  dial:
+    conn_timeout_ms: 500
+    read_timeout_ms: 500
+    write_timeout_ms: 1000
 
 trace:
   enable: false
