@@ -79,6 +79,8 @@ type CppDocument struct {
 	Source         string     `json:"source"`
 	Url            string     `json:"id"`
 	IsLocalNews    string     `json:"is_local_news"`
+	IsAdult        bool       `json:"adult"`
+	IsAdultTitle   bool       `json:"is_adult_title"`
 	GeoTags        []GeoTag   `json:"geotag,omitempty"`
 	Pois           []string   `json:"poi,omitempty"`
 	Channels       []string   `json:"channels,omitempty"`
@@ -104,6 +106,7 @@ type IndexerDocument struct {
 	Source         string     `json:"source"`
 	Url            string     `json:"url"`
 	IsLocalNews    string     `json:"is_local_news"`
+	IsAdult        bool       `json:"adult"`
 	GeoTags        []GeoTag   `json:"geotag,omitempty"`
 	Pois           []string   `json:"poi,omitempty"`
 	Channels       []string   `json:"channels,omitempty"`
@@ -153,6 +156,7 @@ func NewIndexerDocumentFromCpp(doc *CppDocument) *IndexerDocument {
 		Url:            doc.Url,
 		GeoTags:        doc.GeoTags,
 		IsLocalNews:    doc.IsLocalNews,
+		IsAdult:        doc.IsAdult || doc.IsAdultTitle,
 		Pois:           doc.Pois,
 		Channels:       doc.Channels,
 		ChannelsV2:     doc.ChannelsV2,

@@ -43,7 +43,7 @@ redis:
   addr: 172.31.30.131:6379
   db: 0
   key: newdoc_force_explore
-  limit: 3000
+  limit: 30
   dial:
     conn_timeout_ms: 500
     read_timeout_ms: 500

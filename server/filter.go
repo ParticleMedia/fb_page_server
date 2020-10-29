@@ -11,6 +11,7 @@ type NewsFilter func(doc *common.IndexerDocument) bool
 
 var newsFilters = map[string]NewsFilter{
 	"basic":  basicFilter,
+	"adult": adultFilter,
 	"local": localFilter,
 	"domain": domainFilter,
 	"epoch":  epochFilter,
@@ -52,8 +53,11 @@ func categoryFilter(doc *common.IndexerDocument) bool {
 		return false
 	}
 
-	_, ok := doc.TextCategory.FirstCategory["Obituary"]
-	return ok
+	return doc.TextCategory.HasFirstCategory("Obituary")
+}
+
+func adultFilter(doc *common.IndexerDocument) bool {
+	return doc.IsAdult
 }
 
 func FilterNews(doc *common.IndexerDocument, l *common.LogInfo) bool {
