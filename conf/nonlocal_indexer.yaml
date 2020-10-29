@@ -40,8 +40,8 @@ exp_elastic_search:
 redis:
   enable: true
   network: tcp
-  addr: click-proxy-codis.nb.com:6379
-  db: 1
+  addr: proxy.cfb.redisc.nb.com:6379
+  db: 0
   key: newdoc_force_explore
   limit: 3000
   dial:
