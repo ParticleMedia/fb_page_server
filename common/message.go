@@ -90,7 +90,7 @@ type CppDocument struct {
 
 	IsOldDoc       bool       `json:"old_doc"`
 	TitleCCount    int        `json:"title_c_count"`
-	ImageCount     int        `json:"image_count"`
+	ImageCount     float64    `json:"image_count"`
 	WordCount      int        `json:"c_word"`
 	HasVideo       bool       `json:"has_video"`
 }
@@ -162,7 +162,7 @@ func NewIndexerDocumentFromCpp(doc *CppDocument) *IndexerDocument {
 		TextCategoryV2: cateV2,
 
 		TitleCCount: doc.TitleCCount,
-		ImageCount: doc.ImageCount,
+		ImageCount: int(doc.ImageCount),
 		WordCount: doc.WordCount,
 		HasVideo: doc.HasVideo,
 	}
