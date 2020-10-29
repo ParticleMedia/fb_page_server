@@ -40,7 +40,7 @@ func loadSourceInfo() error {
 
 	collection := client.Database("documentLabels").Collection("sourceInfo")
 	filter := bson.M{}
-	projection := bson.M{"_id": 1, "domain": 1, "quality": 1, "paywall_flag": 1, "compatibility": 1}
+	projection := bson.M{"_id": 1, "domain": 1, "sourceTier": 1, "quality": 1, "paywall_flag": 1, "compatibility": 1}
 
 	cursor, err := collection.Find(ctx, filter, options.Find().SetProjection(projection))
 	if err != nil {

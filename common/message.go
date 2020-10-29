@@ -63,6 +63,7 @@ func (t *TextCategoryStruct) HasThirdCategory(category string) bool {
 type SourceInfo struct {
 	Id         string `bson:"_id"`
 	Domain     string `bson:"domain"`
+	SourceTier int32  `bson:"sourceTier"`
 	Quality    int32  `bson:"quality"`
 	Paywall    bool   `bson:"paywall_flag"`
 	Compatibility string `bson:"compatibility"`

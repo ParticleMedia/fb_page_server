@@ -86,7 +86,7 @@ func filterForRedis(doc *common.IndexerDocument) bool {
 
 	// low quality
 	sourceInfo := common.GetSourceInfo(doc.Domain)
-	if sourceInfo == nil || sourceInfo.Quality <= 3 || sourceInfo.Paywall {
+	if sourceInfo == nil || sourceInfo.Quality <= 3 || sourceInfo.SourceTier <= 1 || sourceInfo.Paywall {
 		// ignore
 		return true
 	}
