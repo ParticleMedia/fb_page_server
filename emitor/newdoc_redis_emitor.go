@@ -100,12 +100,14 @@ func filterForRedis(doc *common.IndexerDocument) bool {
 func (c *RedisClient) indexNews(doc *common.IndexerDocument, l *common.LogInfo) error {
 	if filterForRedis(doc) {
 		// ignore
+		l.Set("force_explore", 0)
 		return nil
 	}
 
 	defer func(start time.Time) {
 		metrics.GetOrRegisterTimer("redis.index.latency", nil).UpdateSince(start)
 	} (time.Now())
+	l.Set("force_explore", 1)
 
 	// 获取连接
 	conn := c.cli.Get()

@@ -3,25 +3,31 @@ package common
 import (
 	"fmt"
 	"strings"
+	"sync"
 )
 
-type LogInfo map[string]interface{}
+type LogInfo struct {
+	sync.Map
+}
 
 func NewLogInfo() *LogInfo {
-	return &LogInfo{}
+	return &LogInfo{
+		sync.Map{},
+	}
 }
 
 func (l *LogInfo) Set(key string, value interface{}) {
-	(*l)[key] = value
+	l.Store(key, value)
 }
 
 func (l *LogInfo) ToString() string {
-	if l == nil || len(*l) == 0 {
+	if l == nil {
 		return ""
 	}
-	splits := make([]string, 0, len(*l))
-	for k, v := range *l {
-		splits = append(splits, fmt.Sprintf("%s=%v", k, v))
-	}
+	splits := make([]string, 0)
+	l.Range(func(k, v interface{}) bool {
+		splits = append(splits, fmt.Sprintf("%v=%v", k, v))
+		return true
+	})
 	return strings.Join(splits, " ")
 }
