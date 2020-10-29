@@ -55,14 +55,19 @@ func EmitNews(doc *common.IndexerDocument, l *common.LogInfo) error {
 		l.Set("dests", dests)
 	}()
 
+	var swg sync.WaitGroup
 	for name, emitor := range getNewsEmitors() {
-		err := emitor(doc, l)
-		dests = append(dests, name)
-		if err != nil {
-			//return err
-			continue
-		}
+		swg.Add(1)
+		go func(wg *sync.WaitGroup, name string, emitor NewsEmitor) {
+			defer wg.Done()
+			err := emitor(doc, l)
+			dests = append(dests, name)
+			if err != nil {
+				glog.Warningf("emit doc %s to %s with error: %+v", doc.DocId, name, err)
+			}
+		} (&swg, name, emitor)
 	}
+	swg.Wait()
 	return nil
 }
 
