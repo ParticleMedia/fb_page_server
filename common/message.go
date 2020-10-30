@@ -92,9 +92,9 @@ type CppDocument struct {
 	TextCategoryV2 *TextCategoryStruct  `json:"text_category_v2,omitempty"`
 
 	IsOldDoc       bool       `json:"old_doc"`
-	TitleCCount    int        `json:"title_c_count"`
-	ImageCount     float64    `json:"image_count"`
-	WordCount      int        `json:"c_word"`
+	TitleCCount    int32      `json:"title_c_count"`
+	ImageCount     float32    `json:"image_count"`
+	WordCount      int32      `json:"c_word"`
 	HasVideo       bool       `json:"has_video"`
 }
 
@@ -118,9 +118,9 @@ type IndexerDocument struct {
 	TextCategoryV2 *TextCategoryStruct  `json:"text_category_v2,omitempty"`
 
 	IsOldDoc       bool       `json:"old_doc"`
-	TitleCCount    int        `json:"title_c_count"`
-	ImageCount     int        `json:"image_count"`
-	WordCount      int        `json:"c_word"`
+	TitleCCount    int32      `json:"title_c_count"`
+	ImageCount     int32      `json:"image_count"`
+	WordCount      int32      `json:"c_word"`
 	HasVideo       bool       `json:"has_video"`
 }
 
@@ -168,7 +168,7 @@ func NewIndexerDocumentFromCpp(doc *CppDocument) *IndexerDocument {
 
 		IsOldDoc:       doc.IsOldDoc,
 		TitleCCount:    doc.TitleCCount,
-		ImageCount:     int(doc.ImageCount),
+		ImageCount:     int32(doc.ImageCount),
 		WordCount:      doc.WordCount,
 		HasVideo:       doc.HasVideo,
 	}
@@ -190,5 +190,6 @@ type ESDocument struct {
 	FirstCats    []string  `json:"first_cat,omitempty"`
 	SecondCats   []string  `json:"second_cat,omitempty"`
 	ThirdCats    []string  `json:"third_cat,omitempty"`
-	SourceQuality int32      `json:"source_quality"`
+	ImageCount   int32     `json:"image_count"`
+	SourceQuality int32    `json:"source_quality"`
 }

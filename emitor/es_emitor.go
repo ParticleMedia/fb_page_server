@@ -164,6 +164,7 @@ func transformToBaseEsDoc(doc *common.IndexerDocument) *common.ESDocument {
 		FirstCats:     mapKeyList(doc.TextCategory.FirstCategory, 0.0),
 		SecondCats:    mapKeyList(doc.TextCategory.SecondCategory, 0.0),
 		ThirdCats:     mapKeyList(doc.TextCategory.ThirdCategory, 0.0),
+		ImageCount:    doc.ImageCount,
 		SourceQuality: sourceQuality,
 	}
 }
