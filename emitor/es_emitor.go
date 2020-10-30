@@ -143,6 +143,11 @@ func mapKeyList(m map[string]float64, thr float64) []string {
 }
 
 func transformToBaseEsDoc(doc *common.IndexerDocument) *common.ESDocument {
+	var soueceQuality int32 = 0
+	sourceInfo := common.GetSourceInfo(doc.Domain)
+	if sourceInfo != nil {
+		soueceQuality = sourceInfo.Quality
+	}
 	return &common.ESDocument{
 		DocId:        doc.DocId,
 		Date:         time.Unix(doc.Epoch, 0),
@@ -159,27 +164,18 @@ func transformToBaseEsDoc(doc *common.IndexerDocument) *common.ESDocument {
 		FirstCats:    mapKeyList(doc.TextCategory.FirstCategory, 0.0),
 		SecondCats:   mapKeyList(doc.TextCategory.SecondCategory, 0.0),
 		ThirdCats:    mapKeyList(doc.TextCategory.ThirdCategory, 0.0),
+		SourceQuality: soueceQuality,
 	}
 }
 
 func transformToExpEsDoc(doc *common.IndexerDocument) *common.ESDocument {
-	return &common.ESDocument{
-		DocId:        doc.DocId,
-		Date:         time.Unix(doc.Epoch, 0),
-		Title:        doc.Title,
-		Timestamp:    time.Now().UnixNano() / 1000000,
-		ContentType:  doc.ContentType,
-		Domain:       doc.Domain,
-		Source:       common.ReplaceSpace(strings.ToLower(doc.Source)),
-		Url:          doc.Url,
-		Pois:         doc.Pois,
-		Channels:     doc.ChannelsV2,
-		NluTags:      doc.NluTags,
-		Tpcs:         mapKeyList(doc.Tpcs, 0.3),
-		FirstCats:    mapKeyList(doc.TextCategoryV2.FirstCategory, 0.0),
-		SecondCats:   mapKeyList(doc.TextCategoryV2.SecondCategory, 0.0),
-		ThirdCats:    mapKeyList(doc.TextCategoryV2.ThirdCategory, 0.0),
-	}
+	esDoc := transformToBaseEsDoc(doc)
+	// use exp fields
+	esDoc.Channels = doc.ChannelsV2
+	esDoc.FirstCats = mapKeyList(doc.TextCategoryV2.FirstCategory, 0.0)
+	esDoc.SecondCats = mapKeyList(doc.TextCategoryV2.SecondCategory, 0.0)
+	esDoc.ThirdCats = mapKeyList(doc.TextCategoryV2.ThirdCategory, 0.0)
+	return esDoc
 }
 
 func mockESEmitor(indexPattern string) NewsEmitor {

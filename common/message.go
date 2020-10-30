@@ -189,4 +189,5 @@ type ESDocument struct {
 	FirstCats    []string  `json:"first_cat,omitempty"`
 	SecondCats   []string  `json:"second_cat,omitempty"`
 	ThirdCats    []string  `json:"third_cat,omitempty"`
+	SourceQuality int32      `json:"source_quality"`
 }
