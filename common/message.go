@@ -166,10 +166,11 @@ func NewIndexerDocumentFromCpp(doc *CppDocument) *IndexerDocument {
 		TextCategory:   cate,
 		TextCategoryV2: cateV2,
 
-		TitleCCount: doc.TitleCCount,
-		ImageCount: int(doc.ImageCount),
-		WordCount: doc.WordCount,
-		HasVideo: doc.HasVideo,
+		IsOldDoc:       doc.IsOldDoc,
+		TitleCCount:    doc.TitleCCount,
+		ImageCount:     int(doc.ImageCount),
+		WordCount:      doc.WordCount,
+		HasVideo:       doc.HasVideo,
 	}
 }
 
