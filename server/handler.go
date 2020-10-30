@@ -85,6 +85,7 @@ func newsMessageHandler(data []byte, l *common.LogInfo) error {
 
 	doc := common.NewIndexerDocumentFromCpp(&cppDoc)
 	l.Set("docid", doc.DocId)
+	l.Set("is_old", doc.IsOldDoc)
 	l.Set("epoch", doc.Epoch)
 	l.Set("ctype", doc.ContentType)
 	l.Set("source", doc.Source)
