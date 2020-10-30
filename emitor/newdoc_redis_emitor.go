@@ -68,6 +68,9 @@ func filterForRedis(doc *common.IndexerDocument) bool {
 	if doc.TitleCCount <= 5 {
 		return true
 	}
+	if doc.ImageCount == 0 {
+		return true
+	}
 	if !doc.HasVideo && doc.ImageCount < 2 && doc.WordCount < 100 {
 		return true
 	}
