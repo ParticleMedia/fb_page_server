@@ -63,6 +63,7 @@ func loadSourceInfo() error {
 		}
 
 		sourceInfoMap[sourceInfo.Id] = &sourceInfo
+		sourceInfoMap[sourceInfo.Domain] = &sourceInfo
 		//glog.V(16).Infof("city info: %+v", cityInfo)
 	}
 	sourceMap = sourceInfoMap
