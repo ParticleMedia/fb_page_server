@@ -143,28 +143,28 @@ func mapKeyList(m map[string]float64, thr float64) []string {
 }
 
 func transformToBaseEsDoc(doc *common.IndexerDocument) *common.ESDocument {
-	var soueceQuality int32 = 0
+	var sourceQuality int32 = 0
 	sourceInfo := common.GetSourceInfo(doc.Domain)
 	if sourceInfo != nil {
-		soueceQuality = sourceInfo.Quality
+		sourceQuality = sourceInfo.Quality
 	}
 	return &common.ESDocument{
-		DocId:        doc.DocId,
-		Date:         time.Unix(doc.Epoch, 0),
-		Title:        doc.Title,
-		Timestamp:    time.Now().UnixNano() / 1000000,
-		ContentType:  doc.ContentType,
-		Domain:       doc.Domain,
-		Source:       common.ReplaceSpace(strings.ToLower(doc.Source)),
-		Url:          doc.Url,
-		Pois:         doc.Pois,
-		Channels:     doc.Channels,
-		NluTags:      doc.NluTags,
-		Tpcs:         mapKeyList(doc.Tpcs, 0.3),
-		FirstCats:    mapKeyList(doc.TextCategory.FirstCategory, 0.0),
-		SecondCats:   mapKeyList(doc.TextCategory.SecondCategory, 0.0),
-		ThirdCats:    mapKeyList(doc.TextCategory.ThirdCategory, 0.0),
-		SourceQuality: soueceQuality,
+		DocId:         doc.DocId,
+		Date:          time.Unix(doc.Epoch, 0),
+		Title:         doc.Title,
+		Timestamp:     time.Now().UnixNano() / 1000000,
+		ContentType:   doc.ContentType,
+		Domain:        doc.Domain,
+		Source:        common.ReplaceSpace(strings.ToLower(doc.Source)),
+		Url:           doc.Url,
+		Pois:          doc.Pois,
+		Channels:      doc.Channels,
+		NluTags:       doc.NluTags,
+		Tpcs:          mapKeyList(doc.Tpcs, 0.3),
+		FirstCats:     mapKeyList(doc.TextCategory.FirstCategory, 0.0),
+		SecondCats:    mapKeyList(doc.TextCategory.SecondCategory, 0.0),
+		ThirdCats:     mapKeyList(doc.TextCategory.ThirdCategory, 0.0),
+		SourceQuality: sourceQuality,
 	}
 }
 
