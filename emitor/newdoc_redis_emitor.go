@@ -6,6 +6,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/gomodule/redigo/redis"
 	"github.com/rcrowley/go-metrics"
+	"math/rand"
 	"strings"
 	"time"
 )
@@ -21,6 +22,7 @@ type RedisClient struct {
 	conf *common.RedisConfig
 	key string
 	limit uint64
+	drop  uint64
 }
 
 func NewRedisClient(config *common.RedisConfig) (*RedisClient, error) {
@@ -29,7 +31,8 @@ func NewRedisClient(config *common.RedisConfig) (*RedisClient, error) {
 		conf: config,
 		cli: nil,
 		key: config.Key,
-		limit: config.Limit,
+		limit: ((config.Limit * (100 - config.Drop)) / 100) - 1,
+		drop: config.Drop,
 	}
 
 	client.cli = &redis.Pool{
@@ -105,6 +108,15 @@ func (c *RedisClient) indexNews(doc *common.IndexerDocument, l *common.LogInfo) 
 		// ignore
 		l.Set("force_explore", 0)
 		return nil
+	}
+
+	if c.drop > 0 {
+		// random drop docs
+		randInt := uint64(rand.Intn(100))
+		if randInt < c.drop {
+			l.Set("force_explore", -1)
+			return nil
+		}
 	}
 
 	defer func(start time.Time) {

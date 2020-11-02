@@ -34,6 +34,7 @@ type RedisConfig struct {
 	Db int `yaml:"db" default:"0"`
 	Key string `yaml:"key"`
 	Limit uint64 `yaml:"limit"`
+	Drop  uint64 `yaml:"drop"`
 	Dial struct {
 		ConnTimeout uint32 `yaml:"conn_timeout_ms" default:20`
 		ReadTimeout uint32 `yaml:"read_timeout_ms" default:100`
