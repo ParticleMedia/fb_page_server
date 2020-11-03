@@ -88,6 +88,7 @@ type CppDocument struct {
 	ChannelsV2     []string   `json:"channels_v2,omitempty"`
 	NluTags        []string   `json:"nlu_tags,omitempty"`
 	Tpcs           map[string]float64   `json:"tpcs,omitempty"`
+	Tpcm           map[string]float64   `json:"tpcm,omitempty"`
 	TextCategory   *TextCategoryStruct  `json:"text_category,omitempty"`
 	TextCategoryV2 *TextCategoryStruct  `json:"text_category_v2,omitempty"`
 
@@ -114,6 +115,7 @@ type IndexerDocument struct {
 	ChannelsV2     []string   `json:"channels_v2,omitempty"`
 	NluTags        []string   `json:"nlu_tags,omitempty"`
 	Tpcs           map[string]float64   `json:"tpcs,omitempty"`
+	Tpcm           map[string]float64   `json:"tpcm,omitempty"`
 	TextCategory   *TextCategoryStruct  `json:"text_category,omitempty"`
 	TextCategoryV2 *TextCategoryStruct  `json:"text_category_v2,omitempty"`
 
@@ -163,6 +165,7 @@ func NewIndexerDocumentFromCpp(doc *CppDocument) *IndexerDocument {
 		ChannelsV2:     doc.ChannelsV2,
 		NluTags:        tags,
 		Tpcs:           doc.Tpcs,
+		Tpcm:           doc.Tpcm,
 		TextCategory:   cate,
 		TextCategoryV2: cateV2,
 
@@ -187,6 +190,7 @@ type ESDocument struct {
 	Channels     []string  `json:"channels,omitempty"`
 	NluTags      []string  `json:"nlu_tags,omitempty"`
 	Tpcs         []string  `json:"tpcs,omitempty"`
+	Tpcm         []string  `json:"tpcm,omitempty"`
 	FirstCats    []string  `json:"first_cat,omitempty"`
 	SecondCats   []string  `json:"second_cat,omitempty"`
 	ThirdCats    []string  `json:"third_cat,omitempty"`

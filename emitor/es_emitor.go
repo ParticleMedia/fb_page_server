@@ -161,6 +161,7 @@ func transformToBaseEsDoc(doc *common.IndexerDocument) *common.ESDocument {
 		Channels:      doc.Channels,
 		NluTags:       doc.NluTags,
 		Tpcs:          mapKeyList(doc.Tpcs, 0.3),
+		Tpcm:          mapKeyList(doc.Tpcm, 0.0),
 		FirstCats:     mapKeyList(doc.TextCategory.FirstCategory, 0.0),
 		SecondCats:    mapKeyList(doc.TextCategory.SecondCategory, 0.0),
 		ThirdCats:     mapKeyList(doc.TextCategory.ThirdCategory, 0.0),
