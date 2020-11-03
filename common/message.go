@@ -87,8 +87,8 @@ type CppDocument struct {
 	Channels       []string   `json:"channels,omitempty"`
 	ChannelsV2     []string   `json:"channels_v2,omitempty"`
 	NluTags        []string   `json:"nlu_tags,omitempty"`
-	Tpcs           map[string]float64   `json:"tpcs,omitempty"`
-	Tpcm           map[string]float64   `json:"tpcm,omitempty"`
+	Tpcs           map[string]float64   `json:"tpc_s,omitempty"`
+	Tpcm           map[string]float64   `json:"tpc_m,omitempty"`
 	TextCategory   *TextCategoryStruct  `json:"text_category,omitempty"`
 	TextCategoryV2 *TextCategoryStruct  `json:"text_category_v2,omitempty"`
 
@@ -114,8 +114,8 @@ type IndexerDocument struct {
 	Channels       []string   `json:"channels,omitempty"`
 	ChannelsV2     []string   `json:"channels_v2,omitempty"`
 	NluTags        []string   `json:"nlu_tags,omitempty"`
-	Tpcs           map[string]float64   `json:"tpcs,omitempty"`
-	Tpcm           map[string]float64   `json:"tpcm,omitempty"`
+	Tpcs           map[string]float64   `json:"tpc_s,omitempty"`
+	Tpcm           map[string]float64   `json:"tpc_m,omitempty"`
 	TextCategory   *TextCategoryStruct  `json:"text_category,omitempty"`
 	TextCategoryV2 *TextCategoryStruct  `json:"text_category_v2,omitempty"`
 
