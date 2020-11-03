@@ -135,7 +135,7 @@ func mapKeyList(m map[string]float64, thr float64) []string {
 
 	l := make([]string, 0, len(m))
 	for k, v := range m {
-		if v >= 0.3 {
+		if v >= thr {
 			l = append(l, k)
 		}
 	}
