@@ -7,7 +7,6 @@ import (
 	"github.com/gomodule/redigo/redis"
 	"github.com/rcrowley/go-metrics"
 	"math/rand"
-	"strings"
 	"time"
 )
 
@@ -85,18 +84,12 @@ func filterForRedis(doc *common.IndexerDocument) bool {
 				return true
 			}
 		}
-		if doc.TextCategory.HasThirdCategory("PoliticsGovernment_Federal_POTUS") {
-			return true
-		}
 	}
 
 	// low quality
 	sourceInfo := common.GetSourceInfo(doc.Domain)
-	if sourceInfo == nil || sourceInfo.Quality <= 3 || sourceInfo.SourceTier <= 1 || sourceInfo.Paywall {
+	if sourceInfo == nil || sourceInfo.Quality < 3 || sourceInfo.SourceTier <= 1 || sourceInfo.Paywall {
 		// ignore
-		return true
-	}
-	if strings.HasPrefix(sourceInfo.Compatibility, "block_") {
 		return true
 	}
 
