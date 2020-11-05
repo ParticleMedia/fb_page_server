@@ -12,6 +12,7 @@ type NewsFilter func(doc *common.IndexerDocument) bool
 var newsFilters = map[string]NewsFilter{
 	"basic":  basicFilter,
 	"adult": adultFilter,
+	"quality": sourceQualityFilter,
 	"local": localFilter,
 	"epoch":  epochFilter,
 	"ctype":  cTypeFilter,
@@ -50,6 +51,11 @@ func categoryFilter(doc *common.IndexerDocument) bool {
 
 func adultFilter(doc *common.IndexerDocument) bool {
 	return doc.IsAdult
+}
+
+func sourceQualityFilter(doc *common.IndexerDocument) bool {
+	sourceInfo := common.GetSourceInfo(doc.Domain)
+	return sourceInfo == nil || sourceInfo.Quality < 2
 }
 
 func FilterNews(doc *common.IndexerDocument, l *common.LogInfo) bool {
