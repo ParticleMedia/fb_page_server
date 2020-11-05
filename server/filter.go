@@ -13,13 +13,10 @@ var newsFilters = map[string]NewsFilter{
 	"basic":  basicFilter,
 	"adult": adultFilter,
 	"local": localFilter,
-	"domain": domainFilter,
 	"epoch":  epochFilter,
 	"ctype":  cTypeFilter,
 	"category": categoryFilter,
 }
-
-var domainBlackList = map[string]struct{}{}
 
 func basicFilter(doc *common.IndexerDocument) bool {
 	if len(doc.DocId) == 0 {
@@ -32,11 +29,6 @@ func basicFilter(doc *common.IndexerDocument) bool {
 
 func localFilter(doc *common.IndexerDocument) bool {
 	return doc.IsLocalNews == "true" && (doc.TextCategory == nil || !doc.TextCategory.IsSport())
-}
-
-func domainFilter(doc *common.IndexerDocument) bool {
-	_, ok := domainBlackList[doc.Domain]
-	return ok
 }
 
 func epochFilter(doc *common.IndexerDocument) bool {
