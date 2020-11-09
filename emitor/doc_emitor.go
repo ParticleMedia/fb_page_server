@@ -6,6 +6,12 @@ import (
 	"sync"
 )
 
+var exploreBlockedCategories = []string{
+	"CrimePublicsafety",
+	"Obituary",
+	"ClimateEnvironment",
+}
+
 type NewsEmitor func(*common.IndexerDocument, *common.LogInfo) error
 
 var initOnce = &sync.Once{}
@@ -71,3 +77,33 @@ func EmitNews(doc *common.IndexerDocument, l *common.LogInfo) error {
 	return nil
 }
 
+func isExplorable(doc *common.IndexerDocument) bool {
+	// short article
+	if doc.TitleCCount < 5 {
+		return false
+	}
+	if doc.ImageCount == 0 {
+		return false
+	}
+	if !doc.HasVideo && doc.ImageCount < 2 && doc.WordCount < 100 {
+		return false
+	}
+
+	// select category
+	if doc.TextCategory != nil {
+		for _, cat := range exploreBlockedCategories {
+			if doc.TextCategory.HasFirstCategory(cat) {
+				return false
+			}
+		}
+	}
+
+	// low quality
+	sourceInfo := common.GetSourceInfo(doc.Domain)
+	if sourceInfo == nil || sourceInfo.Quality < 2 || sourceInfo.SourceTier <= 1 || sourceInfo.Paywall {
+		// ignore
+		return false
+	}
+
+	return true
+}

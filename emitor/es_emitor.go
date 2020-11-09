@@ -192,6 +192,7 @@ func transformToBaseEsDoc(doc *common.IndexerDocument) *common.ESDocument {
 		ThirdCats:     mapKeyList(doc.TextCategory.ThirdCategory, 0.0),
 		ImageCount:    doc.ImageCount,
 		SourceQuality: sourceQuality,
+		Explorable:    isExplorable(doc),
 	}
 }
 

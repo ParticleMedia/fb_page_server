@@ -196,4 +196,5 @@ type ESDocument struct {
 	ThirdCats    []string  `json:"third_cat,omitempty"`
 	ImageCount   int32     `json:"image_count"`
 	SourceQuality int32    `json:"source_quality"`
+	Explorable   bool      `json:"explorable"`
 }

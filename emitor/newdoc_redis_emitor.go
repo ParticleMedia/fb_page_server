@@ -10,12 +10,6 @@ import (
 	"time"
 )
 
-var blockedCategories = []string{
-	"CrimePublicsafety",
-	"Obituary",
-	"ClimateEnvironment",
-}
-
 type RedisClient struct {
 	cli *redis.Pool
 	conf *common.RedisConfig
@@ -67,28 +61,13 @@ func filterForRedis(doc *common.IndexerDocument) bool {
 		return true
 	}
 	// short article
-	if doc.TitleCCount <= 5 {
+	if !isExplorable(doc) {
 		return true
-	}
-	if doc.ImageCount == 0 {
-		return true
-	}
-	if !doc.HasVideo && doc.ImageCount < 2 && doc.WordCount < 100 {
-		return true
-	}
-
-	// select category
-	if doc.TextCategory != nil {
-		for _, cat := range blockedCategories {
-			if doc.TextCategory.HasFirstCategory(cat) {
-				return true
-			}
-		}
 	}
 
 	// low quality
 	sourceInfo := common.GetSourceInfo(doc.Domain)
-	if sourceInfo == nil || sourceInfo.Quality < 3 || sourceInfo.SourceTier <= 1 || sourceInfo.Paywall {
+	if sourceInfo == nil || sourceInfo.Quality < 3 {
 		// ignore
 		return true
 	}
