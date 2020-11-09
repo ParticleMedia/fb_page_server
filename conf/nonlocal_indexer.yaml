@@ -44,7 +44,7 @@ redis:
   db: 0
   key: newdoc_force_explore
   limit: 3000
-  drop: 70
+  drop: 0
   dial:
     conn_timeout_ms: 500
     read_timeout_ms: 500
