@@ -114,13 +114,17 @@ func (i *ESIndexer) indexNews(doc *common.IndexerDocument, isExp bool, l *common
 	if err == nil {
 		metrics.GetOrRegisterHistogram("es.index.error", nil, metrics.NewExpDecaySample(128, 0.015)).Update(0)
 	} else {
-		metrics.GetOrRegisterHistogram("es.index.error", nil, metrics.NewExpDecaySample(128, 0.01500)).Update(100)
+		metrics.GetOrRegisterHistogram("es.index.error", nil, metrics.NewExpDecaySample(128, 0.015)).Update(100)
 		glog.Warningf("es index to %s error: %+v", index, err)
 	}
 	return err
 }
 
 func (i *ESIndexer) indexBaseNews(doc *common.IndexerDocument, l *common.LogInfo) error {
+	if !doc.IsOldDoc {
+		delay := time.Now().Unix() - doc.Epoch
+		metrics.GetOrRegisterHistogram("es.index.delay", nil, metrics.NewExpDecaySample(128, 0.015)).Update(delay)
+	}
 	return i.indexNews(doc, false, l)
 }
 
