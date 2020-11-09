@@ -123,7 +123,9 @@ func (i *ESIndexer) indexNews(doc *common.IndexerDocument, isExp bool, l *common
 func (i *ESIndexer) indexBaseNews(doc *common.IndexerDocument, l *common.LogInfo) error {
 	if !doc.IsOldDoc {
 		delay := time.Now().Unix() - doc.Epoch
-		metrics.GetOrRegisterHistogram("es.index.delay", nil, metrics.NewExpDecaySample(128, 0.015)).Update(delay)
+		if delay > 0 && delay < 86400 {
+			metrics.GetOrRegisterHistogram("es.index.delay", nil, metrics.NewExpDecaySample(128, 0.015)).Update(delay)
+		}
 	}
 	return i.indexNews(doc, false, l)
 }
