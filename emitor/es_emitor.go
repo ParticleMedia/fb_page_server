@@ -123,11 +123,30 @@ func (i *ESIndexer) indexNews(doc *common.IndexerDocument, isExp bool, l *common
 func (i *ESIndexer) indexBaseNews(doc *common.IndexerDocument, l *common.LogInfo) error {
 	if !doc.IsOldDoc {
 		delay := time.Now().Unix() - doc.Epoch
-		if delay > 0 && delay < 86400 {
-			metrics.GetOrRegisterHistogram("es.index.delay", nil, metrics.NewExpDecaySample(128, 0.015)).Update(delay)
-		}
+		metricIndexDelay(delay)
 	}
 	return i.indexNews(doc, false, l)
+}
+
+func metricIndexDelay(delay int64) {
+	if delay > 0 && delay < 86400 {
+		metrics.GetOrRegisterHistogram("es.index.delay", nil, metrics.NewExpDecaySample(128, 0.015)).Update(delay)
+	}
+
+	// 分段占比
+	if delay < 3600 {
+		metrics.GetOrRegisterHistogram("es.index.delay.in_1h.rate", nil, metrics.NewExpDecaySample(128, 0.015)).Update(100)
+	} else if delay < 10800 {
+		metrics.GetOrRegisterHistogram("es.index.delay.in_3h.rate", nil, metrics.NewExpDecaySample(128, 0.015)).Update(100)
+	} else if delay < 21600 {
+		metrics.GetOrRegisterHistogram("es.index.delay.in_6h.rate", nil, metrics.NewExpDecaySample(128, 0.015)).Update(100)
+	} else if delay < 43200 {
+		metrics.GetOrRegisterHistogram("es.index.delay.in_12h.rate", nil, metrics.NewExpDecaySample(128, 0.015)).Update(100)
+	} else if delay < 86400 {
+		metrics.GetOrRegisterHistogram("es.index.delay.in_1d.rate", nil, metrics.NewExpDecaySample(128, 0.015)).Update(100)
+	} else {
+		metrics.GetOrRegisterHistogram("es.index.delay.more_than_1d.rate", nil, metrics.NewExpDecaySample(128, 0.015)).Update(100)
+	}
 }
 
 func (i *ESIndexer) indexExpNews(doc *common.IndexerDocument, l *common.LogInfo) error {
