@@ -29,10 +29,7 @@ func basicFilter(doc *common.IndexerDocument) bool {
 }
 
 func localFilter(doc *common.IndexerDocument) bool {
-	if doc.LocalScore < 0.5 {
-		return false
-	}
-	return len(doc.GeoTags) > 0 && (doc.TextCategory == nil || !doc.TextCategory.IsSport())
+	return doc.LocalScore > 0.5
 }
 
 func epochFilter(doc *common.IndexerDocument) bool {
