@@ -121,7 +121,8 @@ func (c *RedisClient) indexNews(doc *common.IndexerDocument, l *common.LogInfo) 
 		return flushErr
 	}
 
-	reply, recvErr := redis.ReceiveWithTimeout(conn, time.Duration(500) * time.Millisecond)
+	// wait all command done
+	reply, recvErr := redis.DoWithTimeout(conn, time.Duration(500) * time.Millisecond, "")
 	if recvErr != nil {
 		glog.Warningf("recv redis with error: %+v", recvErr)
 		common.GetOrRegisterHistogram("redis.index.error", nil, func() metrics.Sample { return metrics.NewExpDecaySample(1024, 0.015)}).Update(100)
