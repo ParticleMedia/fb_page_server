@@ -10,7 +10,7 @@ if [ ! -d ${log_dir} ]; then
 fi
 cd ${log_dir}
 
-log_name="nonlocal_indexer"
+log_name="fb_page_tcat"
 cur_info_log=`readlink ${log_name}.INFO`
 cur_warn_log=`readlink ${log_name}.WARNING`
 cur_error_log=`readlink ${log_name}.ERROR`

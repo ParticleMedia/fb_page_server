@@ -1,0 +1,10 @@
+kafka:
+  addrs:
+    - 172.31.16.23:9092
+    - 172.31.16.24:9092
+    - 172.31.16.25:9092
+  group_id: fb
+  topics:
+    - facebook
+  commit_interval: 60
+  consumer: 1

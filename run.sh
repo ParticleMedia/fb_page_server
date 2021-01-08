@@ -2,10 +2,10 @@
 cd $(dirname $0)
 
 LOG_DIR=../log
-CONF_PATH=../conf/nonlocal_indexer.yaml
+CONF_PATH=../conf/fb_page_tcat.yaml
 LOG_LEVEL=3
-ALSO_LOG_TO_STDERR=false
-PUSH_TSDB=true
+ALSO_LOG_TO_STDERR=true
+PUSH_TSDB=false
 
 if [ "x"$1 == "xdebug" ]; then
     CONF_PATH=../conf/nonlocal_indexer_debug.yaml
@@ -18,7 +18,7 @@ fi
 
 mkdir -p ${LOG_DIR}
 echo $$ >./pid
-exec ./nonlocal_indexer -conf=${CONF_PATH} \
+exec ./fb_page_tcat -conf=${CONF_PATH} \
     -log_dir=${LOG_DIR} \
     -v=${LOG_LEVEL} \
     -alsologtostderr=${ALSO_LOG_TO_STDERR} \

@@ -1,8 +1,6 @@
 package server
 
 import (
-	"time"
-
 	"github.com/ParticleMedia/nonlocal-indexer/common"
 )
 
@@ -14,7 +12,6 @@ var newsFilters = map[string]NewsFilter{
 	"adult": adultFilter,
 	"quality": sourceQualityFilter,
 	"local": localFilter,
-	"epoch":  epochFilter,
 	"ctype":  cTypeFilter,
 	"category": categoryFilter,
 }
@@ -30,11 +27,6 @@ func basicFilter(doc *common.IndexerDocument) bool {
 
 func localFilter(doc *common.IndexerDocument) bool {
 	return doc.LocalScore > 0.5
-}
-
-func epochFilter(doc *common.IndexerDocument) bool {
-	now := time.Now().Unix()
-	return now - doc.Epoch > common.ServiceConfig.Expire
 }
 
 func cTypeFilter(doc *common.IndexerDocument) bool {

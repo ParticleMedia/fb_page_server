@@ -21,4 +21,4 @@ tool:
 
 clean:
 	rm -rf ./output
-	rm -f ./nonlocal_indexer
+	rm -f ./fb_page_tcat
