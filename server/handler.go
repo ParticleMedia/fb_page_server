@@ -1,9 +1,10 @@
 package server
 
 import (
+	"encoding/json"
 	"time"
 
-	"github.com/ParticleMedia/nonlocal-indexer/common"
+	"github.com/ParticleMedia/fb_page_tcat/common"
 	"github.com/golang/glog"
 )
 
@@ -61,31 +62,20 @@ func handlerWrapper(name string, handler func([]byte, *common.LogInfo) error) Me
 
 func newsMessageHandler(data []byte, l *common.LogInfo) error {
 	glog.Infof(string(data))
-	//var cppDoc common.CppDocument
-	//err := json.Unmarshal(data, &cppDoc)
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//if cppDoc.DisableIndex {
-	//	metrics.GetOrRegisterMeter("news.disable.qps", nil).Mark(1)
-	//	return nil
-	//}
-	//
-	//doc := common.NewIndexerDocumentFromCpp(&cppDoc)
-	//l.Set("docid", doc.DocId)
-	//l.Set("is_old", doc.IsOldDoc)
-	//l.Set("epoch", doc.Epoch)
-	//l.Set("ctype", doc.ContentType)
-	//l.Set("source", doc.Source)
-	//l.Set("url", doc.Url)
-	//
+
+	var profile common.FBProfile
+	err := json.Unmarshal(data, &profile)
+	if err != nil {
+		return err
+	}
+
+	//var page common.FBPage
+
 	//// filter
-	//if FilterNews(doc, l) {
-	//	metrics.GetOrRegisterMeter("news.filter.qps", nil).Mark(1)
+	//if FilterNews(page, l) {
 	//	return nil
 	//}
-	//glog.V(16).Infof("%+v", doc)
+	//glog.Infof("%+v", profile)
 	//
 	//// emit
 	//err = emitor.EmitNews(doc, l)

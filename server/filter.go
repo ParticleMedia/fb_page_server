@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/ParticleMedia/nonlocal-indexer/common"
+	"github.com/ParticleMedia/fb_page_tcat/common"
 )
 
 // return true if need filter, false if pass

@@ -3,8 +3,20 @@ kafka:
     - 172.31.16.23:9092
     - 172.31.16.24:9092
     - 172.31.16.25:9092
-  group_id: fb
+  group_id: group_test
   topics:
     - facebook
   commit_interval: 60
   consumer: 1
+
+#kafka:
+#  addrs:
+#    - 172.24.21.112:9092
+#    - 172.24.19.184:9092
+#    - 172.24.16.186:9092
+#  version: 1.0.1
+#  group_id: fb
+#  topics:
+#    - cpp_documents
+#  commit_interval: 60
+#  consumer: 1

@@ -3,12 +3,12 @@ package server
 import (
 	"fmt"
 	"golang.org/x/net/context"
-	"log"
 	"sync"
 	"time"
 
-	"github.com/ParticleMedia/nonlocal-indexer/common"
+	"github.com/ParticleMedia/fb_page_tcat/common"
 	"github.com/Shopify/sarama"
+	"github.com/bsm/sarama-cluster"
 	"github.com/golang/glog"
 	"github.com/rcrowley/go-metrics"
 )
@@ -18,33 +18,25 @@ type KafkaConsumer struct {
 	conf         *common.KafkaConfig
 	commitOffset bool
 	worker       uint32
-	client       sarama.ConsumerGroup
+	client       *cluster.Consumer
 	swg          sync.WaitGroup
 	cancel       context.CancelFunc
 }
 
 func NewKafkaConsumer(name string, conf *common.KafkaConfig) (*KafkaConsumer, error) {
-	version, err := sarama.ParseKafkaVersion(conf.Version)
-	if err != nil {
-		log.Panicf("Error parsing Kafka version: %v", err)
-	}
-
-	config := sarama.NewConfig()
-	config.Version = version
+	config := cluster.NewConfig()
 	config.Consumer.Return.Errors = true
-	config.Consumer.Offsets.Initial = sarama.OffsetOldest //初始从最新的offset开始
-	// var commitOffset bool = (conf.CommitInterval > 0)
-	var commitOffset bool = false
+	config.Group.Return.Notifications = true
+	config.Consumer.Offsets.Initial = sarama.OffsetOldest
+	var commitOffset bool = (conf.CommitInterval > 0)
 	config.Consumer.Offsets.AutoCommit.Enable = commitOffset
 	if commitOffset {
-		// 提交commit
 		config.Consumer.Offsets.AutoCommit.Interval = time.Duration(conf.CommitInterval) * time.Second
 	} else {
-		// 不提交commit
 		glog.Infof("do not commit kafka")
 	}
 
-	c, err := sarama.NewConsumerGroup(conf.Addrs, conf.GroupId, config)
+	consumer, err := cluster.NewConsumer(conf.Addrs, conf.GroupId, conf.Topics, config)
 	if err != nil {
 		glog.Errorf("Failed open consumer: %v", err)
 		return nil, err
@@ -55,7 +47,7 @@ func NewKafkaConsumer(name string, conf *common.KafkaConfig) (*KafkaConsumer, er
 		conf:         conf,
 		commitOffset: commitOffset,
 		worker:       conf.Consumer,
-		client:       c,
+		client:       consumer,
 		swg:          sync.WaitGroup{},
 	}, nil
 }
@@ -78,47 +70,22 @@ type MessageHandler func([]byte) error
 
 // consumer 消费者
 func (c *KafkaConsumer) Consume(f MessageHandler) {
-	handler := &KafkaHandler{
-		name: c.name,
-		commitOffset: c.commitOffset,
-		process: f,
-		worker: c.worker,
-		ready: make(chan bool),
-		swg: sync.WaitGroup{},
-	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	c.cancel = cancel
 	c.swg.Add(1)
 	go func() {
 		defer c.swg.Done()
-		for {
-			// `Consume` should be called inside an infinite loop, when a
-			// server-side rebalance happens, the consumer session will need to be
-			// recreated to get the new claims
-			if err := c.client.Consume(ctx, c.conf.Topics, handler); err != nil {
-				glog.Fatalf("Consume Error: %+v", err)
-			}
-			// check if context was cancelled, signaling that the consumer should stop
-			if ctx.Err() != nil {
-				glog.Infof("consumer stopped")
-				return
-			}
-			handler.ready = make(chan bool)
+		for msg := range c.client.Messages() {
+			f(msg.Value)
+			c.client.MarkOffset(msg, "") // mark message as processed
 		}
 	}()
 
-	// log client errors
 	c.swg.Add(1)
 	go func() {
 		defer c.swg.Done()
 		for err := range c.client.Errors() {
 			glog.Warningf("Error from client: %+v", err)
 		}
-	} ()
-
-	// wait until handler.Setup has been called
-	<-handler.ready
+	}()
 }
 
 func (c *KafkaConsumer) Join() {
@@ -174,11 +141,6 @@ func (h *KafkaHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim s
 }
 
 func (h *KafkaHandler) handleMessage(msg *sarama.ConsumerMessage) {
-	defer func(start time.Time) {
-		metrics.GetOrRegisterTimer(fmt.Sprintf("consume.%s.latency", h.name), nil).Update(time.Since(start))
-	}(time.Now())
-
-	metrics.GetOrRegisterMeter(fmt.Sprintf("consume.%s.qps", h.name), nil).Mark(1)
 	err := h.process(msg.Value)
 	if err == nil {
 		metrics.GetOrRegisterHistogram(fmt.Sprintf("consume.%s.error", h.name), nil, metrics.NewExpDecaySample(1024, 0.015)).Update(0)

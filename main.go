@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/ParticleMedia/nonlocal-indexer/common"
-	"github.com/ParticleMedia/nonlocal-indexer/server"
+	"github.com/ParticleMedia/fb_page_tcat/common"
+	"github.com/ParticleMedia/fb_page_tcat/server"
 	"github.com/golang/glog"
 	"os"
 	"os/signal"

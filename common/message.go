@@ -69,6 +69,21 @@ type SourceInfo struct {
 	Compatibility string `bson:"compatibility"`
 }
 
+type FBProfile struct {
+	UserId string  `json:"_id"`
+	Pages  []FBPage `json:"likes,omitempty"`
+}
+
+type FBPage struct {
+	Id string `json:"id"`
+	Name string `json:"name"`
+	About string `json:"about"`
+	Category string `json:"category"`
+
+	Raw string
+	Extra string
+}
+
 // cpp kafka message
 type CppDocument struct {
 	DocId          string     `json:"_id"`

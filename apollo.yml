@@ -1,4 +1,4 @@
-nonlocal-indexer:
+fb_page_tcat:
   build:
     command: /bin/bash build.sh
     image: docker.particlenews.com:5000/go:1.12
