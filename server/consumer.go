@@ -1,151 +1,175 @@
 package server
 
 import (
-	"fmt"
-	"golang.org/x/net/context"
+	"encoding/json"
+	"github.com/ParticleMedia/fb_page_tcat/common"
+	"github.com/ParticleMedia/fb_page_tcat/storage"
+	"github.com/ParticleMedia/fb_page_tcat/tcat"
+	cluster "github.com/bsm/sarama-cluster"
+	"github.com/golang/glog"
+	"os"
+	"os/signal"
 	"sync"
 	"time"
-
-	"github.com/ParticleMedia/fb_page_tcat/common"
-	"github.com/Shopify/sarama"
-	"github.com/bsm/sarama-cluster"
-	"github.com/golang/glog"
-	"github.com/rcrowley/go-metrics"
 )
 
-type KafkaConsumer struct {
-	name         string
-	conf         *common.KafkaConfig
-	commitOffset bool
-	worker       uint32
-	client       *cluster.Consumer
-	swg          sync.WaitGroup
-	cancel       context.CancelFunc
-}
+var clusterConf *cluster.Config
 
-func NewKafkaConsumer(name string, conf *common.KafkaConfig) (*KafkaConsumer, error) {
-	config := cluster.NewConfig()
-	config.Consumer.Return.Errors = true
-	config.Group.Return.Notifications = true
-	config.Consumer.Offsets.Initial = sarama.OffsetOldest
-	var commitOffset bool = (conf.CommitInterval > 0)
-	config.Consumer.Offsets.AutoCommit.Enable = commitOffset
+func InitClusterConfig(conf *common.KafkaConfig) {
+	clusterConf = cluster.NewConfig()
+	clusterConf.Consumer.Return.Errors = true
+	clusterConf.Group.Return.Notifications = true
+	clusterConf.Consumer.Offsets.Initial = conf.OffsetInitial
+	commitOffset := (conf.CommitInterval > 0)
+	clusterConf.Consumer.Offsets.AutoCommit.Enable = commitOffset
 	if commitOffset {
-		config.Consumer.Offsets.AutoCommit.Interval = time.Duration(conf.CommitInterval) * time.Second
+		clusterConf.Consumer.Offsets.AutoCommit.Interval = time.Duration(conf.CommitInterval) * time.Second
+		clusterConf.Consumer.Offsets.CommitInterval = clusterConf.Consumer.Offsets.AutoCommit.Interval
 	} else {
 		glog.Infof("do not commit kafka")
 	}
-
-	consumer, err := cluster.NewConsumer(conf.Addrs, conf.GroupId, conf.Topics, config)
-	if err != nil {
-		glog.Errorf("Failed open consumer: %v", err)
-		return nil, err
-	}
-
-	return &KafkaConsumer{
-		name:         name,
-		conf:         conf,
-		commitOffset: commitOffset,
-		worker:       conf.Consumer,
-		client:       consumer,
-		swg:          sync.WaitGroup{},
-	}, nil
 }
 
-func (c *KafkaConsumer) Close() error {
-	if c.cancel != nil {
-		c.cancel()
+func process(data *[]byte, conf *common.Config) error {
+	var profile common.FBProfile
+	parseErr := json.Unmarshal(*data, &profile)
+	if parseErr != nil {
+		return parseErr
 	}
-	if c.client != nil {
-		err := c.client.Close()
-		c.swg.Wait()
-		c.client = nil
-		glog.Infof("kafka consumer exited.")
-		return err
+
+	pageCnt := 0
+	totalFirstCats := make(map[string]float64)
+	totalSecondCats := make(map[string]float64)
+	totalThirdCats := make(map[string]float64)
+	for _, page := range profile.Pages {
+		result, tcatErr := tcat.DoTextCategory(&page, conf)
+		if tcatErr != nil || result == nil {
+			continue
+		}
+		if len(result.Tcats.FirstCats) == 0 && len(result.Tcats.SecondCats) == 0 && len(result.Tcats.ThirdCats) == 0 {
+			continue
+		}
+		pageCnt += 1
+		for cat, score := range result.Tcats.FirstCats {
+			_, ok := totalFirstCats[cat]
+			if ok {
+				totalFirstCats[cat] += score
+			} else {
+				totalFirstCats[cat] = score
+			}
+		}
+		for cat, score := range result.Tcats.SecondCats {
+			_, ok := totalSecondCats[cat]
+			if ok {
+				totalSecondCats[cat] += score
+			} else {
+				totalSecondCats[cat] = score
+			}
+		}
+		for cat, score := range result.Tcats.ThirdCats {
+			_, ok := totalThirdCats[cat]
+			if ok {
+				totalThirdCats[cat] += score
+			} else {
+				totalThirdCats[cat] = score
+			}
+		}
 	}
+
+	if len(totalFirstCats) == 0 && len(totalSecondCats) == 0 && len(totalThirdCats) == 0 {
+		return nil
+	}
+
+	for cat, score := range totalFirstCats {
+		totalFirstCats[cat] = score / float64(pageCnt)
+	}
+	for cat, score := range totalSecondCats {
+		totalSecondCats[cat] = score / float64(pageCnt)
+	}
+	for cat, score := range totalThirdCats {
+		totalThirdCats[cat] = score / float64(pageCnt)
+	}
+
+	totalTextCategory := common.TextCategory{
+		FirstCats: totalFirstCats,
+		SecondCats: totalSecondCats,
+		ThirdCats: totalThirdCats,
+	}
+
+	totalTextCategoryBody := common.TextCategoryBody{
+		Tcats: totalTextCategory,
+	}
+	value, encodeErr := json.Marshal(totalTextCategoryBody)
+	if encodeErr != nil {
+		return encodeErr
+	}
+
+	glog.V(16).Infof("ready to write to ups, key: %d, value: %s", profile.Id, string(value))
+	storage.WriteToUps(uint64(profile.Id), string(value), &conf.UpsConf)
 	return nil
 }
 
-type MessageHandler func([]byte) error
+func Consume()  {
+	defer common.Wg.Done()
 
-// consumer 消费者
-func (c *KafkaConsumer) Consume(f MessageHandler) {
-	c.swg.Add(1)
+	// init consumer
+	kafkaConf := common.FBConfig.KafkaConf
+	consumer, createErr := cluster.NewConsumer(kafkaConf.Addr, kafkaConf.GroupId, kafkaConf.Topic, clusterConf)
+	if createErr != nil {
+		glog.Warningf("create kafka consumer with error: %+v", createErr)
+		return
+	}
+	defer consumer.Close()
+
+	// trap SIGINT to trigger a shutdown
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, os.Interrupt)
+
+	// consume errors
 	go func() {
-		defer c.swg.Done()
-		for msg := range c.client.Messages() {
-			f(msg.Value)
-			c.client.MarkOffset(msg, "") // mark message as processed
+		for consumeErr := range consumer.Errors() {
+			glog.Warningf("consumer with error: %+v", consumeErr)
 		}
 	}()
 
-	c.swg.Add(1)
+	// consume notifications
 	go func() {
-		defer c.swg.Done()
-		for err := range c.client.Errors() {
-			glog.Warningf("Error from client: %+v", err)
+		for ntf := range consumer.Notifications() {
+			glog.Infof("kafka rebalanced: %+v", ntf)
 		}
 	}()
-}
 
-func (c *KafkaConsumer) Join() {
-	c.swg.Wait()
-}
-
-
-// KafkaHandler represents a Sarama consumer group handler
-type KafkaHandler struct {
-	name string
-	commitOffset bool
-	process MessageHandler
-	worker uint32
-	ready chan bool
-	swg sync.WaitGroup
-}
-
-// Setup is run at the beginning of a new session, before ConsumeClaim
-func (h *KafkaHandler) Setup(sarama.ConsumerGroupSession) error {
-	// Mark the consumer as ready
-	close(h.ready)
-	return nil
-}
-
-// Cleanup is run at the end of a session, once all ConsumeClaim goroutines have exited
-func (h *KafkaHandler) Cleanup(sarama.ConsumerGroupSession) error {
-	return nil
-}
-
-// ConsumeClaim must start a consumer loop of ConsumerGroupClaim's Messages().
-func (h *KafkaHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
-
-	// NOTE:
-	// Do not move the code below to a goroutine.
-	// The `ConsumeClaim` itself is called within a goroutine, see:
-	// https://github.com/Shopify/sarama/blob/master/consumer_group.go#L27-L29
-
-	// workers
-	h.swg.Add(int(h.worker))
-	for i := uint32(0); i < h.worker; i++ {
-		go func() {
-			defer h.swg.Done()
-			for msg := range claim.Messages() {
-				h.handleMessage(msg)
-				if h.commitOffset {
-					session.MarkMessage(msg, "")
+	workerCnt := common.FBConfig.WorkerCnt
+	var consumeWg = &sync.WaitGroup{}
+	consumeWg.Add(workerCnt)
+	chWorker := make(chan *[]byte, workerCnt)
+	for i := 0; i < workerCnt; i++ {
+		go func(input chan *[]byte, wg *sync.WaitGroup) {
+			defer wg.Done()
+			for data := range input {
+				processErr := process(data, common.FBConfig)
+				if processErr != nil {
+					glog.Warningf("process with error: %+v, data: %s", processErr, *data)
 				}
 			}
-		}()
+		} (chWorker, consumeWg)
 	}
-	h.swg.Wait()
-	return nil
-}
 
-func (h *KafkaHandler) handleMessage(msg *sarama.ConsumerMessage) {
-	err := h.process(msg.Value)
-	if err == nil {
-		metrics.GetOrRegisterHistogram(fmt.Sprintf("consume.%s.error", h.name), nil, metrics.NewExpDecaySample(1024, 0.015)).Update(0)
-	} else {
-		glog.Warningf("handle message error: %+v", err)
-		metrics.GetOrRegisterHistogram(fmt.Sprintf("consume.%s.error", h.name), nil, metrics.NewExpDecaySample(1024, 0.015)).Update(100)
+	// consume messages, watch signals
+Loop:
+	for {
+		select {
+		case msg, ok := <-consumer.Messages():
+			if ok {
+				chWorker <- &msg.Value
+				// mark message as processed
+				consumer.MarkOffset(msg, "")
+			}
+		case <-signals:
+			break Loop
+		}
 	}
+
+	close(chWorker)
+	consumeWg.Wait()
 }

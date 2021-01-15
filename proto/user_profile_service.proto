@@ -1,0 +1,222 @@
+syntax = "proto3";
+package user_profile_pb;
+
+import "google/api/annotations.proto";
+
+// profile value支持的数据类型
+enum ProfileValueType {
+    UNKNOW = 0;
+    STRING = 1;
+    INT = 2;
+    FLOAT = 3;
+    RAW_BYTES = 4;
+    LIST = 5; // string list
+}
+
+// <name, version> 标识一个profile
+message ProfileIdentity {
+    string name = 1;
+    uint32 version = 2;
+}
+
+message StringList  {
+    repeated string list = 1;
+}
+
+// type + 对应数据类型的value
+message ProfileValue {
+    ProfileValueType type = 1;
+    oneof value {
+        string str_value = 2;
+        int64 int_value = 3;
+        double float_value  =  4;
+        bytes bytes_value = 5;
+        StringList list_value = 6;
+    };
+}
+
+// 一个profile item: id + value
+message ProfileItem {
+    ProfileIdentity id = 1;
+    ProfileValue value = 2;
+};
+
+// 用户及其对应的profile_list
+message UserProfile {
+    uint64 uid = 1;
+    repeated ProfileItem profile_list = 2;
+};
+
+message GetRequest {
+    // 请求id，每个请求唯一
+    int64 log_id = 1;
+    // 请求来源，方便追查
+    string from = 2;
+    // 用户id
+    uint64 uid = 3;
+    // 要读取的profile列表
+    repeated ProfileIdentity profile_list = 4;
+    // 实验的bucket
+    string bucket = 5;
+
+    // options
+    // 是否跳过cache
+    bool disable_cache = 6;
+};
+
+message GetResponse {
+	// 状态码, =0正常, <0错误;
+    int64 status = 1;
+	// 错误信息
+    string err_msg = 2;
+	// 读取到的Profile数据
+    repeated ProfileItem profile_list = 3;
+};
+
+message BatchGetRequest {
+    // 请求id，每个请求唯一
+    int64 log_id = 1;
+    // 请求来源，方便追查
+    string from = 2;
+    // 用户id列表
+    repeated uint64 uids = 3;
+    // 要读取的profile列表
+    repeated ProfileIdentity profile_list = 4;
+    // 实验的bucket
+    string bucket = 5;
+
+    // options
+    // 是否跳过cache
+    bool disable_cache = 6;
+};
+
+message BatchGetResponse {
+    // 状态码, =0正常, <0错误
+    int64 status = 1;
+    // 错误信息
+    string err_msg = 2;
+    // 读取到的Profile数据
+	repeated UserProfile profiles = 3;
+}
+
+message SetRequest {
+    // 请求id，每个请求唯一
+    int64 log_id = 1;
+	// 请求来源，方便追查
+    string from = 2;
+	// 要写入的profile数据
+    UserProfile profile = 3;
+
+    // options
+    // 是否跳过cache
+    bool disable_cache = 4;
+};
+
+message SetResponse {
+    // 状态码, =0正常, <0错误
+    int64 status = 1;
+    // 错误信息
+    string err_msg = 2;
+};
+
+message BatchSetRequest {
+    // 请求id，每个请求唯一
+    int64 log_id = 1;
+	// 请求来源，方便追查
+    string from = 2;
+    // 要写入的profile数据
+    repeated UserProfile profiles = 3;
+
+    // options
+    // 是否跳过cache
+    bool disable_cache = 4;
+};
+
+message BatchSetResponse {
+    // 状态码, =0正常, <0错误
+    int64 status = 1;
+    // 错误信息
+    string err_msg = 2;
+};
+
+message DeleteRequest {
+    // 请求id，每个请求唯一
+    int64 log_id = 1;
+    // 请求来源，方便追查
+    string from = 2;
+    // 用户id
+    uint64 uid = 3;
+    // 要删除的profile列表
+    repeated ProfileIdentity profile_list = 4;
+
+    // options
+    // 是否跳过cache
+    bool disable_cache = 5;
+};
+
+message DeleteResponse {
+    // 状态码, =0正常, <0错误;
+    int64 status = 1;
+    // 错误信息
+    string err_msg = 2;
+};
+
+message BatchDeleteRequest {
+      // 请求id，每个请求唯一
+      int64 log_id = 1;
+      // 请求来源，方便追查
+      string from = 2;
+      // 用户id列表
+      repeated uint64 uids = 3;
+      // 要删除的profile列表
+      repeated ProfileIdentity profile_list = 4;
+
+      // options
+      // 是否跳过cache
+      bool disable_cache = 5;
+};
+
+message BatchDeleteResponse {
+    // 状态码, =0正常, <0错误;
+    int64 status = 1;
+    // 错误信息
+    string err_msg = 2;
+};
+
+service UserProfileService {
+	// 线上读写接口
+    rpc Get (GetRequest) returns (GetResponse) {
+        option (google.api.http) = {
+            post: "/v1/get"
+            body: "*"
+        };
+    }
+    rpc Set (SetRequest) returns (SetResponse) {
+        option (google.api.http) = {
+            post: "/v1/set"
+            body: "*"
+        };
+    }
+    rpc Delete (DeleteRequest) returns (DeleteResponse) {
+        option (google.api.http) = {
+            post: "/v1/del"
+            body: "*"
+        };
+    }
+    // 批量读写接口，线上禁用, 仅用于线下集群
+	rpc BatchGet (BatchGetRequest) returns (BatchGetResponse) {
+        option (google.api.http) = {
+            post: "/v1/batch_get"
+            body: "*"
+        };}
+    rpc BatchSet (BatchSetRequest) returns (BatchSetResponse) {
+        option (google.api.http) = {
+            post: "/v1/batch_set"
+            body: "*"
+        };}
+    rpc BatchDelete (BatchDeleteRequest) returns (BatchDeleteResponse) {
+        option (google.api.http) = {
+            post: "/v1/batch_del"
+            body: "*"
+        };}
+};

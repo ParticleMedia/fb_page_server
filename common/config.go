@@ -1,28 +1,60 @@
 package common
 
 import (
-	"os"
-
 	yaml "gopkg.in/yaml.v3"
+	"os"
+	"sync"
 )
 
-var ServiceConfig *Config
+var FBConfig *Config
+var Wg = &sync.WaitGroup{}
+
+type LogConfig struct {
+	InfoLevel  int32  `yaml:"info_level"`
+	SampleRate uint32 `yaml:"sample_rate"`
+}
 
 type KafkaConfig struct {
-	Addrs          []string `yaml:"addrs"`
-	Version        string   `yaml:"version"`
+	Addr           []string `yaml:"addrs"`
+	Topic          []string `yaml:"topics"`
 	GroupId        string   `yaml:"group_id"`
-	Topics         []string `yaml:"topics"`
-	CommitInterval uint32   `yaml:"commit_interval"`
-	Consumer       uint32   `yaml:"consumer"`
+	OffsetInitial  int64    `yaml:"offset_initial"`
+	CommitInterval int64    `yaml:"commit_interval"`
+}
+
+type MongoConfig struct {
+	Addr       string `yaml:"addr"`
+	ReplicaSet string `yaml:"replica_set"`
+	Timeout    int64  `yaml:"timeout"`
+	Database   string `yaml:"database"`
+	Collection string `yaml:"collection"`
+}
+
+type TextCategoryConfig struct {
+	Uri         string `yaml:"uri"`
+	ContentType string `yaml:"content_type"`
+}
+
+type UserProfileConfig struct {
+	Addr         string `yaml:"addr"`
+	Timeout      int64  `yaml:"timeout"`
+	ReqFrom      string `yaml:"req_from"`
+	Profile      string `yaml:"profile"`
+	Version      int64  `yaml:"version"`
+	Format       string `yaml:"format"`
+	DisableCache bool   `yaml:"disable_cache"`
 }
 
 type Config struct {
-	Kafka     KafkaConfig         `yaml:"kafka"`
+	WorkerCnt int                `yaml:"worker_cnt"`
+	LogConf   LogConfig          `yaml:"log"`
+	KafkaConf KafkaConfig        `yaml:"kafka"`
+	MongoConf MongoConfig        `yaml:"mongo"`
+	TcatConf  TextCategoryConfig `yaml:"text_category"`
+	UpsConf   UserProfileConfig  `yaml:"user_profile"`
 }
 
 func LoadConfig(confPath string) error {
-	//打开文件
 	filePtr, err := os.Open(confPath)
 	if err != nil {
 		return err
@@ -30,10 +62,7 @@ func LoadConfig(confPath string) error {
 	defer filePtr.Close()
 
 	decoder := yaml.NewDecoder(filePtr)
-	ServiceConfig = &Config{}
-	err = decoder.Decode(ServiceConfig)
-	if err != nil {
-		return err
-	}
+	FBConfig = &Config{}
+	err = decoder.Decode(FBConfig)
 	return err
 }

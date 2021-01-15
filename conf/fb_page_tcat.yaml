@@ -1,22 +1,36 @@
+worker_cnt: 5
+
+log:
+  info_level: 3
+  sample_rate: 10
+
 kafka:
   addrs:
     - 172.31.16.23:9092
     - 172.31.16.24:9092
     - 172.31.16.25:9092
-  group_id: group_test
   topics:
     - facebook
+  group_id: fb
+  offset_initial: -1
   commit_interval: 60
-  consumer: 1
 
-#kafka:
-#  addrs:
-#    - 172.24.21.112:9092
-#    - 172.24.19.184:9092
-#    - 172.24.16.186:9092
-#  version: 1.0.1
-#  group_id: fb
-#  topics:
-#    - cpp_documents
-#  commit_interval: 60
-#  consumer: 1
+mongo:
+  addr: mongo.fbprofile.user-profile:d3jbJE19xWhbpwLUAXEA9QkiLqDiPM5X@fbprofile.mongo.nb.com:27017
+  replica_set: fbprofile
+  timeout: 5000
+  database: fb_tcat
+  collection: page_tcat
+
+text_category:
+  uri: http://text-category-dnn.ha.nb.com:9111/api/v0/category_classification_dnn
+  content_type: application/json
+
+user_profile:
+  addr: user-profile-offline.ha.nb.com:9999
+  timeout: 5000
+  req_from: facebook_page_category
+  profile: fb_page_tcat
+  version: 0
+  format: string
+  disable_cache: false

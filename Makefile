@@ -15,10 +15,5 @@ format: clean fmt
 build:
 	./build.sh
 
-tool:
-	mkdir -p output/tools
-	chmod +x output/tools/*
-
 clean:
 	rm -rf ./output
-	rm -f ./fb_page_tcat

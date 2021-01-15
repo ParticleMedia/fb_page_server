@@ -2,70 +2,60 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"github.com/ParticleMedia/fb_page_tcat/common"
+	infolog "github.com/ParticleMedia/fb_page_tcat/log"
 	"github.com/ParticleMedia/fb_page_tcat/server"
+	"github.com/ParticleMedia/fb_page_tcat/storage"
 	"github.com/golang/glog"
-	"os"
-	"os/signal"
-	"sync"
-	"syscall"
 )
 
-var configFile = flag.String("conf", "../conf/fb_page_tcat.yaml", "path of config")
-var handler *server.Handler = nil
-var stopOnce = &sync.Once{}
+const (
+	defaultConfigPath = "../conf/fb_page_tcat.yaml"
+)
 
-func initGlobalResources() {
+var configFile = flag.String("conf", defaultConfigPath, "path of config")
+
+func InitGlobalResources() (error) {
 	confErr := common.LoadConfig(*configFile)
 	if confErr != nil {
-		glog.Fatalf("failed to config: %+v", confErr)
+		glog.Warningf("load config with error: %+v", confErr)
+		return confErr
 	}
-	glog.Infof("Load config file: %+v success", *configFile)
+	glog.Infof("load config success from file: %+v", *configFile)
+
+	infolog.SetInfoLogLevel(glog.Level(common.FBConfig.LogConf.InfoLevel))
+
+	server.InitClusterConfig(&common.FBConfig.KafkaConf)
+
+	mongoErr := storage.BuildMongoClient(&common.FBConfig.MongoConf)
+	if mongoErr != nil {
+		glog.Warningf("build mongo client with error: %+v", mongoErr)
+		return mongoErr
+	}
+	glog.Infof("connect success to mogodb: %s", common.FBConfig.MongoConf.Addr)
+
+	storage.SetValueType(&common.FBConfig.UpsConf)
+
+	common.Wg.Add(1)
+	return nil
 }
 
-func releaseGlobalResources() {
-	if handler != nil {
-		handler.Stop()
-		handler = nil
-		glog.Info("Handler stopped!")
+func ReleaseGlobalResources() {
+	common.Wg.Wait()
+
+	disConnErr := storage.MongoDisconnect()
+	if disConnErr != nil {
+		glog.Warningf("mongo client disconnect with error: %+v", disConnErr)
 	}
 }
 
-func handleSignal(c <-chan os.Signal) {
-	for s := range c {
-		switch s {
-		case syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT:
-			glog.Infof("Exit with signal: %v", s)
-			stopOnce.Do(releaseGlobalResources)
-			glog.Flush()
-			os.Exit(0)
-		}
+func main()  {
+	initErr := InitGlobalResources()
+	if initErr != nil {
+		panic(initErr)
 	}
-}
 
-func main() {
-	flag.Parse()
-	defer func() { // 必须要先声明defer，否则不能捕获到panic异常
-		if err := recover(); err != nil {
-			fmt.Println(err) // 这里的err其实就是panic传入的内容
-		}
-	}()
-	defer glog.Flush()
+	go server.Consume()
 
-	initGlobalResources()
-	defer stopOnce.Do(releaseGlobalResources)
-
-	//创建监听退出chan
-	c := make(chan os.Signal)
-	//监听指定信号 ctrl+c kill
-	signal.Notify(c, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-	go handleSignal(c)
-
-	handler, err := server.NewHandler(common.ServiceConfig)
-	if err != nil {
-		glog.Fatalf("Init handler error %+v", err)
-	}
-	handler.Start()
-	handler.Join()
+	ReleaseGlobalResources()
 }
