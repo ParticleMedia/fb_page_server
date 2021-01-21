@@ -3,9 +3,8 @@ package main
 import (
 	"flag"
 	"github.com/ParticleMedia/fb_page_tcat/common"
-	infolog "github.com/ParticleMedia/fb_page_tcat/log"
+	"github.com/ParticleMedia/fb_page_tcat/remote"
 	"github.com/ParticleMedia/fb_page_tcat/server"
-	"github.com/ParticleMedia/fb_page_tcat/storage"
 	"github.com/golang/glog"
 )
 
@@ -23,18 +22,16 @@ func InitGlobalResources() (error) {
 	}
 	glog.Infof("load config success from file: %+v", *configFile)
 
-	infolog.SetInfoLogLevel(glog.Level(common.FBConfig.LogConf.InfoLevel))
-
 	server.InitClusterConfig(&common.FBConfig.KafkaConf)
 
-	mongoErr := storage.BuildMongoClient(&common.FBConfig.MongoConf)
+	mongoErr := remote.BuildMongoClient(&common.FBConfig.MongoConf)
 	if mongoErr != nil {
 		glog.Warningf("build mongo client with error: %+v", mongoErr)
 		return mongoErr
 	}
 	glog.Infof("connect success to mogodb: %s", common.FBConfig.MongoConf.Addr)
 
-	storage.SetValueType(&common.FBConfig.UpsConf)
+	remote.SetValueType(&common.FBConfig.UpsConf)
 
 	common.Wg.Add(1)
 	return nil
@@ -43,7 +40,7 @@ func InitGlobalResources() (error) {
 func ReleaseGlobalResources() {
 	common.Wg.Wait()
 
-	disConnErr := storage.MongoDisconnect()
+	disConnErr := remote.MongoDisconnect()
 	if disConnErr != nil {
 		glog.Warningf("mongo client disconnect with error: %+v", disConnErr)
 	}

@@ -3,8 +3,7 @@ package server
 import (
 	"encoding/json"
 	"github.com/ParticleMedia/fb_page_tcat/common"
-	"github.com/ParticleMedia/fb_page_tcat/storage"
-	"github.com/ParticleMedia/fb_page_tcat/tcat"
+	"github.com/ParticleMedia/fb_page_tcat/remote"
 	cluster "github.com/bsm/sarama-cluster"
 	"github.com/golang/glog"
 	"os"
@@ -31,7 +30,7 @@ func InitClusterConfig(conf *common.KafkaConfig) {
 }
 
 func process(data *[]byte, conf *common.Config) error {
-	var profile common.FBProfile
+	var profile remote.FBProfile
 	parseErr := json.Unmarshal(*data, &profile)
 	if parseErr != nil {
 		return parseErr
@@ -42,7 +41,7 @@ func process(data *[]byte, conf *common.Config) error {
 	totalSecondCats := make(map[string]float64)
 	totalThirdCats := make(map[string]float64)
 	for _, page := range profile.Pages {
-		result, tcatErr := tcat.DoTextCategory(&page, conf)
+		result, tcatErr := remote.DoTextCategory(&page, conf)
 		if tcatErr != nil || result == nil {
 			continue
 		}
@@ -90,13 +89,13 @@ func process(data *[]byte, conf *common.Config) error {
 		totalThirdCats[cat] = score / float64(pageCnt)
 	}
 
-	totalTextCategory := common.TextCategory{
+	totalTextCategory := remote.TextCategory{
 		FirstCats: totalFirstCats,
 		SecondCats: totalSecondCats,
 		ThirdCats: totalThirdCats,
 	}
 
-	totalTextCategoryBody := common.TextCategoryBody{
+	totalTextCategoryBody := remote.TextCategoryBody{
 		Tcats: totalTextCategory,
 	}
 	value, encodeErr := json.Marshal(totalTextCategoryBody)
@@ -105,7 +104,7 @@ func process(data *[]byte, conf *common.Config) error {
 	}
 
 	glog.V(16).Infof("ready to write to ups, key: %d, value: %s", profile.Id, string(value))
-	storage.WriteToUps(uint64(profile.Id), string(value), &conf.UpsConf)
+	remote.WriteToUps(uint64(profile.Id), string(value), &conf.UpsConf)
 	return nil
 }
 
