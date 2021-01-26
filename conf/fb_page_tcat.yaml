@@ -20,17 +20,27 @@ mongo:
   replica_set: fbprofile
   timeout: 5000
   database: fb_tcat
-  collection: page_tcat
+  collections:
+    - page_tcat
+    - page_chn
+    - page_tpcm
 
 text_category:
   uri: http://text-category-dnn.ha.nb.com:9111/api/v0/category_classification_dnn
   content_type: application/json
+  collection: page_tcat
+  profile: fb_page_tcat
+
+channel:
+  uri: http://nlp-attention.ha.svc.k8sc1.nb.com:9211/api/v0/nlp-attention
+  content_type: application/json
+  collection: page_chn
+  profile: fb_page_chn
 
 user_profile:
   addr: user-profile-offline.ha.nb.com:9999
   timeout: 5000
   req_from: facebook_page_category
-  profile: fb_page_tcat
   version: 0
   format: string
   disable_cache: false

@@ -23,23 +23,31 @@ type KafkaConfig struct {
 }
 
 type MongoConfig struct {
-	Addr       string `yaml:"addr"`
-	ReplicaSet string `yaml:"replica_set"`
-	Timeout    int64  `yaml:"timeout"`
-	Database   string `yaml:"database"`
-	Collection string `yaml:"collection"`
+	Addr       string   `yaml:"addr"`
+	ReplicaSet string   `yaml:"replica_set"`
+	Timeout    int64    `yaml:"timeout"`
+	Database   string   `yaml:"database"`
+	Collection []string `yaml:"collections"`
 }
 
 type TextCategoryConfig struct {
 	Uri         string `yaml:"uri"`
 	ContentType string `yaml:"content_type"`
+	Collection  string `yaml:"collection"`
+	Profile     string `yaml:"profile"`
+}
+
+type ChannelConfig struct {
+	Uri         string `yaml:"uri"`
+	ContentType string `yaml:"content_type"`
+	Collection  string `yaml:"collection"`
+	Profile     string `yaml:"profile"`
 }
 
 type UserProfileConfig struct {
 	Addr         string `yaml:"addr"`
 	Timeout      int64  `yaml:"timeout"`
 	ReqFrom      string `yaml:"req_from"`
-	Profile      string `yaml:"profile"`
 	Version      int64  `yaml:"version"`
 	Format       string `yaml:"format"`
 	DisableCache bool   `yaml:"disable_cache"`
@@ -51,6 +59,7 @@ type Config struct {
 	KafkaConf KafkaConfig        `yaml:"kafka"`
 	MongoConf MongoConfig        `yaml:"mongo"`
 	TcatConf  TextCategoryConfig `yaml:"text_category"`
+	ChnConf   ChannelConfig      `yaml:"channel"`
 	UpsConf   UserProfileConfig  `yaml:"user_profile"`
 }
 

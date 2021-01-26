@@ -24,9 +24,9 @@ func InitGlobalResources() (error) {
 
 	server.InitClusterConfig(&common.FBConfig.KafkaConf)
 
-	mongoErr := remote.BuildMongoClient(&common.FBConfig.MongoConf)
+	mongoErr := remote.BuildMongoCollections(&common.FBConfig.MongoConf)
 	if mongoErr != nil {
-		glog.Warningf("build mongo client with error: %+v", mongoErr)
+		glog.Warningf("build mongo collections with error: %+v", mongoErr)
 		return mongoErr
 	}
 	glog.Infof("connect success to mogodb: %s", common.FBConfig.MongoConf.Addr)
@@ -47,6 +47,8 @@ func ReleaseGlobalResources() {
 }
 
 func main()  {
+	flag.Parse()
+
 	initErr := InitGlobalResources()
 	if initErr != nil {
 		panic(initErr)

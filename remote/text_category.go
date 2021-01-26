@@ -3,40 +3,15 @@ package remote
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"github.com/ParticleMedia/fb_page_tcat/common"
-	user_profile_pb "github.com/ParticleMedia/fb_page_tcat/proto"
 	"github.com/golang/glog"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"google.golang.org/grpc"
 	"io/ioutil"
-	"math/rand"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 )
-
-var mongoClient *mongo.Client
-var collection *mongo.Collection
-var valueType user_profile_pb.ProfileValueType
-
-type FBProfile struct {
-	Id    int32    `json:"_id"`
-	Pages []FBPage `json:"likes"`
-}
-
-type FBPage struct {
-	Id       string `json:"_id"`
-	Name     string `json:"name"`
-	About    string `json:"about"`
-	Category string `json:"category"`
-}
 
 type PageTcat struct {
 	Id   string                        `bson:"_id"`
@@ -53,8 +28,81 @@ type TextCategory struct {
 	ThirdCats  map[string]float64 `json:"third_cat"`
 }
 
-func DoTextCategory(page *FBPage, conf *common.Config) (*TextCategoryBody, error) {
-	pageTcat, getErr := getFromMongo(page.Id, &conf.MongoConf)
+func ProcessTextCateGory(profile *common.FBProfile, conf *common.Config) error {
+	pageCnt := 0
+	totalFirstCats := make(map[string]float64)
+	totalSecondCats := make(map[string]float64)
+	totalThirdCats := make(map[string]float64)
+	for _, page := range profile.Pages {
+		result, tcatErr := getTextCategory(&page, conf)
+		if tcatErr != nil || result == nil {
+			continue
+		}
+		if len(result.Tcats.FirstCats) == 0 && len(result.Tcats.SecondCats) == 0 && len(result.Tcats.ThirdCats) == 0 {
+			continue
+		}
+		pageCnt += 1
+		for cat, score := range result.Tcats.FirstCats {
+			_, ok := totalFirstCats[cat]
+			if ok {
+				totalFirstCats[cat] += score
+			} else {
+				totalFirstCats[cat] = score
+			}
+		}
+		for cat, score := range result.Tcats.SecondCats {
+			_, ok := totalSecondCats[cat]
+			if ok {
+				totalSecondCats[cat] += score
+			} else {
+				totalSecondCats[cat] = score
+			}
+		}
+		for cat, score := range result.Tcats.ThirdCats {
+			_, ok := totalThirdCats[cat]
+			if ok {
+				totalThirdCats[cat] += score
+			} else {
+				totalThirdCats[cat] = score
+			}
+		}
+	}
+
+	if len(totalFirstCats) == 0 && len(totalSecondCats) == 0 && len(totalThirdCats) == 0 {
+		return nil
+	}
+
+	for cat, score := range totalFirstCats {
+		totalFirstCats[cat] = score / float64(pageCnt)
+	}
+	for cat, score := range totalSecondCats {
+		totalSecondCats[cat] = score / float64(pageCnt)
+	}
+	for cat, score := range totalThirdCats {
+		totalThirdCats[cat] = score / float64(pageCnt)
+	}
+
+	totalTextCategory := TextCategory{
+		FirstCats: totalFirstCats,
+		SecondCats: totalSecondCats,
+		ThirdCats: totalThirdCats,
+	}
+
+	totalTextCategoryBody := TextCategoryBody{
+		Tcats: totalTextCategory,
+	}
+	value, encodeErr := json.Marshal(totalTextCategoryBody)
+	if encodeErr != nil {
+		return encodeErr
+	}
+
+	glog.Infof("ready to write to ups, key: %d, value: %s", profile.Id, string(value))
+	WriteToUps(uint64(profile.Id), string(value), conf.TcatConf.Profile, &conf.UpsConf)
+	return nil
+}
+
+func getTextCategory(page *common.FBPage, conf *common.Config) (*TextCategoryBody, error) {
+	pageTcat, getErr := getTextCategoryFromMongo(page.Id, conf)
 	if getErr == nil && pageTcat != nil && pageTcat.Tcat != nil {
 		firstCats, ok := pageTcat.Tcat["first_cat"]
 		if !ok {
@@ -120,7 +168,7 @@ func DoTextCategory(page *FBPage, conf *common.Config) (*TextCategoryBody, error
 		Id: page.Id,
 		Tcat: tcats,
 	}
-	setErr := setToMongo(pageTcat.Id, pageTcat, &conf.MongoConf)
+	setErr := setTextCategoryToMongo(pageTcat.Id, pageTcat, conf)
 	if setErr != nil {
 		glog.Warning("set to mongo with error: %v, value: %+v", setErr, *pageTcat)
 	}
@@ -128,53 +176,37 @@ func DoTextCategory(page *FBPage, conf *common.Config) (*TextCategoryBody, error
 	return &tcat, nil
 }
 
-func BuildMongoClient(conf *common.MongoConfig) error {
-	timeout := time.Duration(conf.Timeout) * time.Millisecond
+func setTextCategoryToMongo(key string, value *PageTcat, conf *common.Config) (error) {
+	timeout := time.Duration(conf.MongoConf.Timeout) * time.Millisecond
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	uri := fmt.Sprintf("mongodb://%s/?replicaSet=%s&authSource=admin&authMechanism=SCRAM-SHA-1&readPreference=secondaryPreferred", conf.Addr, conf.ReplicaSet)
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri).SetConnectTimeout(timeout))
-	if err != nil {
-		return err
-	}
-
-	mongoClient = client
-	collection = mongoClient.Database(conf.Database).Collection(conf.Collection)
-	return err
-}
-
-func setToMongo(key string, value *PageTcat, conf *common.MongoConfig) (error) {
-	timeout := time.Duration(conf.Timeout) * time.Millisecond
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	_, insertErr := collection.InsertOne(ctx, *value)
+	_, insertErr := collectionMap[conf.TcatConf.Collection].InsertOne(ctx, *value)
 	if insertErr != nil {
 		// replace when exist
-		replaceErr := replaceToMongo(key, value, conf)
+		replaceErr := replaceTextCategoryToMongo(key, value, conf)
 		return replaceErr
 	}
 	return nil
 }
 
-func replaceToMongo(key string, value *PageTcat, conf *common.MongoConfig) (error) {
-	timeout := time.Duration(conf.Timeout) * time.Millisecond
+func replaceTextCategoryToMongo(key string, value *PageTcat, conf *common.Config) (error) {
+	timeout := time.Duration(conf.MongoConf.Timeout) * time.Millisecond
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	filter := bson.M{"_id": key}
-	_, replaceErr := collection.ReplaceOne(ctx, filter, *value)
+	_, replaceErr := collectionMap[conf.TcatConf.Collection].ReplaceOne(ctx, filter, *value)
 	return replaceErr
 }
 
-func getFromMongo(key string, conf *common.MongoConfig) (*PageTcat, error) {
-	timeout := time.Duration(conf.Timeout) * time.Millisecond
+func getTextCategoryFromMongo(key string, conf *common.Config) (*PageTcat, error) {
+	timeout := time.Duration(conf.MongoConf.Timeout) * time.Millisecond
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	filter := bson.M{"_id": key}
-	result := collection.FindOne(ctx, filter)
+	result := collectionMap[conf.TcatConf.Collection].FindOne(ctx, filter)
 	if result.Err() != nil {
 		return nil, result.Err()
 	}
@@ -190,120 +222,4 @@ func getFromMongo(key string, conf *common.MongoConfig) (*PageTcat, error) {
 		return nil, parseErr
 	}
 	return &value, nil
-}
-
-func MongoDisconnect() error {
-	disConnErr := mongoClient.Disconnect(context.Background())
-	return disConnErr
-}
-
-func fromString(data string, valueType user_profile_pb.ProfileValueType) (*user_profile_pb.ProfileValue, error) {
-	if len(data) == 0 {
-		return nil, nil
-	}
-	value := &user_profile_pb.ProfileValue{
-		Type: valueType,
-	}
-	switch valueType {
-	case user_profile_pb.ProfileValueType_STRING:
-		{
-			value.Value = &user_profile_pb.ProfileValue_StrValue{
-				StrValue: data,
-			}
-		}
-	case user_profile_pb.ProfileValueType_RAW_BYTES:
-		{
-			byteValue, err := base64.StdEncoding.DecodeString(data)
-			if err != nil {
-				return nil, err
-			}
-			value.Value = &user_profile_pb.ProfileValue_BytesValue{
-				BytesValue: byteValue,
-			}
-		}
-	case user_profile_pb.ProfileValueType_INT:
-		{
-			intValue, err := strconv.ParseInt(data, 0, 64)
-			if err != nil {
-				return nil, err
-			}
-			value.Value = &user_profile_pb.ProfileValue_IntValue{
-				IntValue: intValue,
-			}
-		}
-	case user_profile_pb.ProfileValueType_FLOAT:
-		{
-			floatValue, err := strconv.ParseFloat(data, 64)
-			if err != nil {
-				return nil, err
-			}
-			value.Value = &user_profile_pb.ProfileValue_FloatValue{
-				FloatValue: floatValue,
-			}
-		}
-	case user_profile_pb.ProfileValueType_LIST:
-		{
-			var stringList []string
-			err := json.Unmarshal([]byte(data), &stringList)
-			if err != nil {
-				return nil, err
-			}
-			value.Value  = &user_profile_pb.ProfileValue_ListValue{
-				ListValue: &user_profile_pb.StringList{
-					List: stringList,
-				},
-			}
-		}
-	default:
-		{
-			return nil, errors.New("unsupported value type")
-		}
-	}
-	return value, nil
-}
-
-func SetValueType(conf *common.UserProfileConfig) {
-	intType, _ := user_profile_pb.ProfileValueType_value[strings.ToUpper(conf.Format)]
-	valueType = user_profile_pb.ProfileValueType(intType)
-}
-
-func WriteToUps(key uint64, value string, conf *common.UserProfileConfig) {
-	conn, dialErr := grpc.Dial(conf.Addr, grpc.WithInsecure())
-	if dialErr != nil {
-		glog.Warningf("ups connect to %s with error: %+v", conf.Addr, dialErr)
-		return
-	}
-	defer conn.Close()
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(conf.Timeout) * time.Millisecond)
-	defer cancel()
-
-	logid := rand.Int63()
-	c := user_profile_pb.NewUserProfileServiceClient(conn)
-	pbValue, valErr := fromString(value, valueType)
-	if valErr != nil {
-		glog.Warning("ups format with error: %+v, key: %d", valErr, key)
-		return
-	}
-	resp, setErr := c.Set(ctx, &user_profile_pb.SetRequest{
-		LogId: logid,
-		From: conf.ReqFrom,
-		Profile: &user_profile_pb.UserProfile{
-			Uid: key,
-			ProfileList: []*user_profile_pb.ProfileItem{
-				{
-					Id: &user_profile_pb.ProfileIdentity{
-						Name: conf.Profile,
-						Version: uint32(conf.Version),
-					},
-					Value: pbValue,
-				},
-			},
-		},
-		DisableCache: conf.DisableCache,
-	})
-
-	if setErr != nil || resp.Status != 0 {
-		glog.Warningf("ups set with error: %v, key: %d", setErr, key)
-	}
 }

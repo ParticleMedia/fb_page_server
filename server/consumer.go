@@ -30,81 +30,25 @@ func InitClusterConfig(conf *common.KafkaConfig) {
 }
 
 func process(data *[]byte, conf *common.Config) error {
-	var profile remote.FBProfile
+	var profile common.FBProfile
 	parseErr := json.Unmarshal(*data, &profile)
 	if parseErr != nil {
+		glog.Warningf("parse FBProfile with error: %+v, data: %s", parseErr, *data)
 		return parseErr
 	}
 
-	pageCnt := 0
-	totalFirstCats := make(map[string]float64)
-	totalSecondCats := make(map[string]float64)
-	totalThirdCats := make(map[string]float64)
-	for _, page := range profile.Pages {
-		result, tcatErr := remote.DoTextCategory(&page, conf)
-		if tcatErr != nil || result == nil {
-			continue
-		}
-		if len(result.Tcats.FirstCats) == 0 && len(result.Tcats.SecondCats) == 0 && len(result.Tcats.ThirdCats) == 0 {
-			continue
-		}
-		pageCnt += 1
-		for cat, score := range result.Tcats.FirstCats {
-			_, ok := totalFirstCats[cat]
-			if ok {
-				totalFirstCats[cat] += score
-			} else {
-				totalFirstCats[cat] = score
-			}
-		}
-		for cat, score := range result.Tcats.SecondCats {
-			_, ok := totalSecondCats[cat]
-			if ok {
-				totalSecondCats[cat] += score
-			} else {
-				totalSecondCats[cat] = score
-			}
-		}
-		for cat, score := range result.Tcats.ThirdCats {
-			_, ok := totalThirdCats[cat]
-			if ok {
-				totalThirdCats[cat] += score
-			} else {
-				totalThirdCats[cat] = score
-			}
-		}
+	tcatErr := remote.ProcessTextCateGory(&profile, conf)
+	if tcatErr != nil {
+		glog.Warningf("process text_category with error: %+v, FBProfile: %+v", tcatErr, profile)
+		return tcatErr
 	}
 
-	if len(totalFirstCats) == 0 && len(totalSecondCats) == 0 && len(totalThirdCats) == 0 {
-		return nil
-	}
+	//chnErr := remote.ProcessChannel(&profile, conf)
+	//if chnErr != nil {
+	//	glog.Warningf("process channel with error: %+v, FBProfile: %+v", chnErr, profile)
+	//	return chnErr
+	//}
 
-	for cat, score := range totalFirstCats {
-		totalFirstCats[cat] = score / float64(pageCnt)
-	}
-	for cat, score := range totalSecondCats {
-		totalSecondCats[cat] = score / float64(pageCnt)
-	}
-	for cat, score := range totalThirdCats {
-		totalThirdCats[cat] = score / float64(pageCnt)
-	}
-
-	totalTextCategory := remote.TextCategory{
-		FirstCats: totalFirstCats,
-		SecondCats: totalSecondCats,
-		ThirdCats: totalThirdCats,
-	}
-
-	totalTextCategoryBody := remote.TextCategoryBody{
-		Tcats: totalTextCategory,
-	}
-	value, encodeErr := json.Marshal(totalTextCategoryBody)
-	if encodeErr != nil {
-		return encodeErr
-	}
-
-	glog.V(16).Infof("ready to write to ups, key: %d, value: %s", profile.Id, string(value))
-	remote.WriteToUps(uint64(profile.Id), string(value), &conf.UpsConf)
 	return nil
 }
 
@@ -146,10 +90,7 @@ func Consume()  {
 		go func(input chan *[]byte, wg *sync.WaitGroup) {
 			defer wg.Done()
 			for data := range input {
-				processErr := process(data, common.FBConfig)
-				if processErr != nil {
-					glog.Warningf("process with error: %+v, data: %s", processErr, *data)
-				}
+				process(data, common.FBConfig)
 			}
 		} (chWorker, consumeWg)
 	}
