@@ -29,6 +29,7 @@ func InitGlobalResources() (error) {
 		glog.Warningf("load channel data with error: %+v", chnErr)
 		return chnErr
 	}
+	glog.Infof("load channel data success")
 
 	mongoErr := remote.BuildMongoCollections(&common.FBConfig.MongoConf)
 	if mongoErr != nil {

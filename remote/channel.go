@@ -88,8 +88,11 @@ func LoadChannels() error {
 			} else if dimension != len(vector){
 				return errors.New(fmt.Sprintf("dimention not same in channel vector files, line: %s", line))
 			}
-			channelVectorMap[channel] = vector
-			channelFormalFormMap[strings.ToLower(channel)] = channel
+			_, ok := channelVectorMap[channel]
+			if !ok {
+				channelVectorMap[channel] = vector
+				channelFormalFormMap[strings.ToLower(channel)] = channel
+			}
 			words := strings.Split(channel, " ")
 			for _, word := range words {
 				word = strings.ToLower(word)
@@ -107,7 +110,6 @@ func LoadChannels() error {
 		id += 1
 		channelVectorFile.Close()
 	}
-	glog.Infof("load channel data success, stop word count: %d, channel count: %d, formal channel count: %d, uniq word count: %d", len(stopWords), len(channelVectorMap), len(channelFormalFormMap), len(channelIndexMap))
 	return nil
 }
 
@@ -213,9 +215,6 @@ func getChannel(page *common.FBPage, conf *common.Config) (map[string]float64, e
 	}
 
 	url := conf.ChnConf.Uri + "?q=" + url.QueryEscape(string(body))
-	glog.Infof("channel req body: %s", string(body))
-	glog.Infof("channel req url: %s", url)
-
 	resp, respErr := http.Get(url)
 	if respErr != nil {
 		return nil, respErr
@@ -232,15 +231,13 @@ func getChannel(page *common.FBPage, conf *common.Config) (map[string]float64, e
 		return nil, readErr
 	}
 
-	glog.Infof("channel resp body: %s", respBody)
+	respMap := make(map[string]interface{})
+	parseErr := json.Unmarshal(respBody, &respMap)
+	if parseErr != nil {
+		return nil, parseErr
+	}
+	glog.Infof("channel resp map: %+v", respMap)
 	return nil, nil
-
-	//var tcat TextCategoryBody
-	//parseErr := json.Unmarshal(respBody, &tcat)
-	//if parseErr != nil {
-	//	return nil, parseErr
-	//}
-	//
 	//tcats := make(map[string]map[string]float64)
 	//tcats["first_cat"] = tcat.Tcats.FirstCats
 	//tcats["second_cat"] = tcat.Tcats.SecondCats
