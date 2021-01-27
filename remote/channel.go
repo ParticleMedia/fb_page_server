@@ -1,32 +1,115 @@
 package remote
 
 import (
-	"bytes"
+	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/ParticleMedia/fb_page_tcat/common"
 	"github.com/golang/glog"
 	"go.mongodb.org/mongo-driver/bson"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 )
 
-//type PageChn struct {
-//	Id  string                       `bson:"_id"`
-//	Chn map[string]map[string]float64 `bson:"text_category"`
-//}
-//
-//type ChannelBody struct {
-//	Tcats TextCategory `json:"text_category"`
-//}
-//
-//type Channel struct {
-//	FirstCats  map[string]float64 `json:"first_cat"`
-//	SecondCats map[string]float64 `json:"second_cat"`
-//	ThirdCats  map[string]float64 `json:"third_cat"`
-//}
+var stopWordFilePath = "/mnt/models/fb-page-server/channel/stopWord.txt"
+var channelVectorFilePath = "/mnt/models/fb-page-server/channel/channel.vector."
+var blackListFilePath = "/mnt/models/fb-page-server/channel/blacklist.txt"
+var stopWords map[string]bool
+var channelVectorMap map[string][]float64
+var channelFormalFormMap map[string]string
+var channelIndexMap map[string]map[string]bool
+var blackList map[string]bool
+
+
+type PageChn struct {
+	Id  string             `bson:"_id"`
+	Chn map[string]float64 `bson:"channels"`
+}
+
+type ChannelBody struct {
+	Channels []string  `json:"channels"`
+	Scores   []float64 `json:"sc_channels"`
+}
+
+func LoadChannels() error {
+	stopWordFile, stopWordErr := os.Open(stopWordFilePath)
+	if stopWordErr != nil {
+		return stopWordErr
+	}
+	stopWords = make(map[string]bool)
+	scanner := bufio.NewScanner(stopWordFile)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if len(line) == 0 {
+			continue
+		}
+		line = strings.ToLower(line)
+		splits := strings.Split(line, "\t")
+		word := strings.TrimSpace(splits[0])
+		stopWords[word] = true
+	}
+	stopWordFile.Close()
+
+	id := 0
+	dimension := -1
+	channelVectorMap = make(map[string][]float64)
+	channelFormalFormMap = make(map[string]string)
+	channelIndexMap = make(map[string]map[string]bool)
+	for {
+		channelVectorFile, channelVectorErr := os.Open(channelVectorFilePath + strconv.Itoa(id))
+		if channelVectorErr != nil {
+			break
+		}
+		scanner = bufio.NewScanner(channelVectorFile)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if len(line) == 0 {
+				continue
+			}
+			splits := strings.Split(line, "\t")
+			channel := splits[0]
+			vector := make([]float64, 0, len(splits) - 1)
+			for i := 1; i < len(splits); i++ {
+				floatValue, floatErr := strconv.ParseFloat(splits[i],64)
+				if floatErr != nil {
+					return errors.New(fmt.Sprintf("parse to vector fail, line: %s", line))
+				}
+				vector = append(vector, floatValue)
+			}
+			if dimension < 0 {
+				dimension = len(vector)
+			} else if dimension != len(vector){
+				return errors.New(fmt.Sprintf("dimention not same in channel vector files, line: %s", line))
+			}
+			channelVectorMap[channel] = vector
+			channelFormalFormMap[strings.ToLower(channel)] = channel
+			words := strings.Split(channel, " ")
+			for _, word := range words {
+				word = strings.ToLower(word)
+				_, stop := stopWords[word]
+				if !stop {
+					channels, exist := channelIndexMap[word]
+					if !exist {
+						channels = make(map[string]bool)
+					}
+					channels[strings.ToLower(channel)] = true
+					channelIndexMap[word] = channels
+				}
+			}
+		}
+		id += 1
+		channelVectorFile.Close()
+	}
+	glog.Infof("load channel data success, stop word count: %d, channel count: %d, formal channel count: %d, uniq word count: %d", len(stopWords), len(channelVectorMap), len(channelFormalFormMap), len(channelIndexMap))
+	return nil
+}
 
 func ProcessChannel(profile *common.FBProfile, conf *common.Config) error {
 	//pageCnt := 0
@@ -108,45 +191,32 @@ func ProcessChannel(profile *common.FBProfile, conf *common.Config) error {
 	return nil
 }
 
-func getChannel(page *common.FBPage, conf *common.Config) (*TextCategoryBody, error) {
-	//pageTcat, getErr := getTextCategoryFromMongo(page.Id, conf)
-	//if getErr == nil && pageTcat != nil && pageTcat.Tcat != nil {
-	//	firstCats, ok := pageTcat.Tcat["first_cat"]
-	//	if !ok {
-	//		firstCats = make(map[string]float64)
-	//	}
-	//	secondCats, ok := pageTcat.Tcat["second_cat"]
-	//	if !ok {
-	//		secondCats = make(map[string]float64)
-	//	}
-	//	thirdCats, ok := pageTcat.Tcat["third_cat"]
-	//	if !ok {
-	//		thirdCats = make(map[string]float64)
-	//	}
-	//	if len(firstCats) != 0 || len(secondCats) != 0 || len(thirdCats) != 0 {
-	//		tcats := TextCategory{
-	//			FirstCats:  firstCats,
-	//			SecondCats: secondCats,
-	//			ThirdCats:  thirdCats,
-	//		}
-	//		tcat := TextCategoryBody{
-	//			Tcats: tcats,
-	//		}
-	//		return &tcat, nil
-	//	}
+func getChannel(page *common.FBPage, conf *common.Config) (map[string]float64, error) {
+	//pageChn, getErr := getChannelFromMongo(page.Id, conf)
+	//if getErr == nil && pageChn != nil && pageChn.Chn != nil && len(pageChn.Chn) != 0{
+	//	return pageChn.Chn, nil
 	//}
 
-	bodyMap := map[string]string{
-		"id": page.Id,
-		"seg_title": page.Name,
-		"seg_content": strings.ReplaceAll(page.About, "\n", ""),
+	seg_title := page.Name
+	seg_content := strings.ReplaceAll(page.About, "\n", "")
+	kws_candidate_next := strings.Split(seg_content, " ")
+
+	bodyMap := map[string]interface{}{
+		"url": "",
+		"seg_title": seg_title,
+		"seg_content": seg_content,
+		"kws_candidate_next": kws_candidate_next,
 	}
 	body, encodeErr := json.Marshal(bodyMap)
 	if encodeErr != nil {
 		return nil, encodeErr
 	}
 
-	resp, respErr := http.Post(conf.ChnConf.Uri, conf.ChnConf.ContentType, bytes.NewBuffer(body))
+	url := conf.ChnConf.Uri + "?q=" + url.QueryEscape(string(body))
+	glog.Infof("channel req body: %s", string(body))
+	glog.Infof("channel req url: %s", url)
+
+	resp, respErr := http.Get(url)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -211,13 +281,13 @@ func replaceChannelToMongo(key string, value *PageTcat, conf *common.Config) (er
 	return replaceErr
 }
 
-func getChannelFromMongo(key string, conf *common.Config) (*PageTcat, error) {
+func getChannelFromMongo(key string, conf *common.Config) (*PageChn, error) {
 	timeout := time.Duration(conf.MongoConf.Timeout) * time.Millisecond
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	filter := bson.M{"_id": key}
-	result := collectionMap[conf.TcatConf.Collection].FindOne(ctx, filter)
+	result := collectionMap[conf.ChnConf.Collection].FindOne(ctx, filter)
 	if result.Err() != nil {
 		return nil, result.Err()
 	}
@@ -227,7 +297,7 @@ func getChannelFromMongo(key string, conf *common.Config) (*PageTcat, error) {
 		return nil, decodeErr
 	}
 
-	var value PageTcat
+	var value PageChn
 	parseErr := bson.Unmarshal(raw, &value)
 	if parseErr != nil {
 		return nil, parseErr

@@ -24,6 +24,12 @@ func InitGlobalResources() (error) {
 
 	server.InitClusterConfig(&common.FBConfig.KafkaConf)
 
+	chnErr := remote.LoadChannels()
+	if chnErr != nil {
+		glog.Warningf("load channel data with error: %+v", chnErr)
+		return chnErr
+	}
+
 	mongoErr := remote.BuildMongoCollections(&common.FBConfig.MongoConf)
 	if mongoErr != nil {
 		glog.Warningf("build mongo collections with error: %+v", mongoErr)

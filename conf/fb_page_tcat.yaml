@@ -1,4 +1,4 @@
-worker_cnt: 5
+worker_cnt: 1
 
 log:
   info_level: 3
@@ -11,8 +11,8 @@ kafka:
     - 172.31.16.25:9092
   topics:
     - facebook
-  group_id: fb
-  offset_initial: -1
+  group_id: group-202101271608
+  offset_initial: -2
   commit_interval: 60
 
 mongo:
@@ -32,7 +32,7 @@ text_category:
   profile: fb_page_tcat
 
 channel:
-  uri: http://nlp-attention.ha.svc.k8sc1.nb.com:9211/api/v0/nlp-attention
+  uri: http://172.31.31.26:9090/keyword
   content_type: application/json
   collection: page_chn
   profile: fb_page_chn
