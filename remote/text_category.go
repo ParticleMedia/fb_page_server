@@ -96,7 +96,7 @@ func ProcessTextCateGory(profile *common.FBProfile, conf *common.Config) error {
 		return encodeErr
 	}
 
-	glog.Infof("ready to write to ups, key: %d, value: %s", profile.Id, string(value))
+	glog.Infof("ready to write to ups, profile: %s, key: %d, value: %s", conf.TcatConf.Profile, profile.Id, string(value))
 	WriteToUps(uint64(profile.Id), string(value), conf.TcatConf.Profile, &conf.UpsConf)
 	return nil
 }
