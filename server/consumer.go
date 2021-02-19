@@ -37,18 +37,26 @@ func process(data *[]byte, conf *common.Config) error {
 		return parseErr
 	}
 
-	tcatErr := remote.ProcessTextCateGory(&profile, conf)
-	if tcatErr != nil {
-		glog.Warningf("process text_category with error: %+v, FBProfile: %+v", tcatErr, profile)
-		return tcatErr
-	}
+	var processWg = &sync.WaitGroup{}
+	processWg.Add(2)
 
-	chnErr := remote.ProcessChannel(&profile, conf)
-	if chnErr != nil {
-		glog.Warningf("process channel with error: %+v, FBProfile: %+v", chnErr, profile)
-		return chnErr
-	}
+	go func(wg *sync.WaitGroup) {
+		defer wg.Done()
+		tcatErr := remote.ProcessTextCateGory(&profile, conf)
+		if tcatErr != nil {
+			glog.Warningf("process text_category with error: %+v, FBProfile: %+v", tcatErr, profile)
+		}
+	}(processWg)
 
+	go func(wg *sync.WaitGroup) {
+		defer wg.Done()
+		chnErr := remote.ProcessChannel(&profile, conf)
+		if chnErr != nil {
+			glog.Warningf("process channel with error: %+v, FBProfile: %+v", chnErr, profile)
+		}
+	}(processWg)
+
+	processWg.Wait()
 	return nil
 }
 

@@ -1,4 +1,4 @@
-worker_cnt: 1
+worker_cnt: 5
 
 log:
   info_level: 3
