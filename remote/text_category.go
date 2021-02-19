@@ -170,13 +170,13 @@ func getTextCategory(page *common.FBPage, conf *common.Config) (*TextCategoryBod
 	}
 	setErr := setTextCategoryToMongo(pageTcat.Id, pageTcat, conf)
 	if setErr != nil {
-		glog.Warning("set to mongo with error: %v, value: %+v", setErr, *pageTcat)
+		glog.Warning("set tcat to mongo with error: %v, value: %+v", setErr, *pageTcat)
 	}
 
 	return &tcat, nil
 }
 
-func setTextCategoryToMongo(key string, value *PageTcat, conf *common.Config) (error) {
+func setTextCategoryToMongo(key string, value *PageTcat, conf *common.Config) error {
 	timeout := time.Duration(conf.MongoConf.Timeout) * time.Millisecond
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()

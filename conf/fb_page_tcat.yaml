@@ -11,8 +11,8 @@ kafka:
     - 172.31.16.25:9092
   topics:
     - facebook
-  group_id: group-202101271608
-  offset_initial: -2
+  group_id: fb_page_server
+  offset_initial: -1
   commit_interval: 60
 
 mongo:

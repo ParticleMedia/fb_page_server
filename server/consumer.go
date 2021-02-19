@@ -19,7 +19,7 @@ func InitClusterConfig(conf *common.KafkaConfig) {
 	clusterConf.Consumer.Return.Errors = true
 	clusterConf.Group.Return.Notifications = true
 	clusterConf.Consumer.Offsets.Initial = conf.OffsetInitial
-	commitOffset := (conf.CommitInterval > 0)
+	commitOffset := conf.CommitInterval > 0
 	clusterConf.Consumer.Offsets.AutoCommit.Enable = commitOffset
 	if commitOffset {
 		clusterConf.Consumer.Offsets.AutoCommit.Interval = time.Duration(conf.CommitInterval) * time.Second
@@ -37,11 +37,11 @@ func process(data *[]byte, conf *common.Config) error {
 		return parseErr
 	}
 
-	//tcatErr := remote.ProcessTextCateGory(&profile, conf)
-	//if tcatErr != nil {
-	//	glog.Warningf("process text_category with error: %+v, FBProfile: %+v", tcatErr, profile)
-	//	return tcatErr
-	//}
+	tcatErr := remote.ProcessTextCateGory(&profile, conf)
+	if tcatErr != nil {
+		glog.Warningf("process text_category with error: %+v, FBProfile: %+v", tcatErr, profile)
+		return tcatErr
+	}
 
 	chnErr := remote.ProcessChannel(&profile, conf)
 	if chnErr != nil {
