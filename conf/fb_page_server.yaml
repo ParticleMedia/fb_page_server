@@ -40,7 +40,7 @@ channel:
 user_profile:
   addr: user-profile-offline.ha.nb.com:9999
   timeout: 5000
-  req_from: facebook_page_category
+  req_from: fb_page_server
   version: 0
   format: string
   disable_cache: false
