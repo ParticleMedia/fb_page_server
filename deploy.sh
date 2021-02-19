@@ -10,7 +10,7 @@ tar -zcvf output.tar.gz output/
 
 for host in ${hosts[@]}; do
     scp -i ${pem_file} output.tar.gz services@${host}:~/
-    ssh -i ${pem_file} services@${host} "tar -zxvf output.tar.gz && cp -f output/conf/* fb_page_tcat/conf && sudo supervisorctl stop fb_page_tcat && cp output/bin/* fb_page_tcat/bin && sudo supervisorctl start fb_page_tcat && rm -rf output && rm -f output.tar.gz"
+    ssh -i ${pem_file} services@${host} "tar -zxvf output.tar.gz && cp -f output/conf/* fb_page_server/conf && sudo supervisorctl stop fb_page_server && cp output/bin/* fb_page_server/bin && sudo supervisorctl start fb_page_server && rm -rf output && rm -f output.tar.gz"
     ret=$?
     if [ $ret -ne 0 ]; then
         exit $ret

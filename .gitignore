@@ -11,7 +11,7 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 output
-./fb_page_tcat
+./fb_page_server
 
 # Dependency directories (remove the comment below to include it)
 # vendor/

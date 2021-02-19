@@ -2,14 +2,14 @@ package main
 
 import (
 	"flag"
-	"github.com/ParticleMedia/fb_page_tcat/common"
-	"github.com/ParticleMedia/fb_page_tcat/remote"
-	"github.com/ParticleMedia/fb_page_tcat/server"
+	"github.com/ParticleMedia/fb_page_server/common"
+	"github.com/ParticleMedia/fb_page_server/remote"
+	"github.com/ParticleMedia/fb_page_server/server"
 	"github.com/golang/glog"
 )
 
 const (
-	defaultConfigPath = "../conf/fb_page_tcat.yaml"
+	defaultConfigPath = "../conf/fb_page_server.yaml"
 )
 
 var configFile = flag.String("conf", defaultConfigPath, "path of config")

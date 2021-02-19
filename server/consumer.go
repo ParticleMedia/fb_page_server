@@ -2,8 +2,8 @@ package server
 
 import (
 	"encoding/json"
-	"github.com/ParticleMedia/fb_page_tcat/common"
-	"github.com/ParticleMedia/fb_page_tcat/remote"
+	"github.com/ParticleMedia/fb_page_server/common"
+	"github.com/ParticleMedia/fb_page_server/remote"
 	cluster "github.com/bsm/sarama-cluster"
 	"github.com/golang/glog"
 	"os"

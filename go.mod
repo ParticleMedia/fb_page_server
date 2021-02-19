@@ -1,4 +1,4 @@
-module github.com/ParticleMedia/fb_page_tcat
+module github.com/ParticleMedia/fb_page_server
 
 go 1.12
 
